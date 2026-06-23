@@ -1,16 +1,18 @@
-# 2EMME Cleaning - Netlify con grafica originale
+# 2EMME Cleaning - Netlify con login PIN
 
-Questo pacchetto mantiene i file originali:
-- mobile/index.html = mobile app originale collegata al backend
-- admin/index.html = dashboard admin originale collegata al backend
+Questa è la versione corretta da pubblicare.
 
-Netlify:
-- Build command: lascia vuoto
-- Publish directory: .
+- Login/PIN attivo
+- Nessun accesso automatico
+- Mobile: /mobile/
+- Admin: /admin/
+- Netlify publish directory: .
 
-URL:
-- /mobile/
-- /admin/
+PIN configurati nella mobile app:
+- Maria: 1827
+- Carmen: 2326
+- Supervisore: 2026
 
-Backend:
-https://script.google.com/macros/s/AKfycbwnXtCVV8BD_5xiItJqZ1YjKqTZCzqvUds2r_tzNVZeWqIJBRERcZtn2mZJKkgmdMHq/exec
+Nota sicurezza:
+Il PIN lato frontend blocca l'accesso normale all'interfaccia, ma non è sicurezza bancaria.
+Per sicurezza forte serve autenticazione backend con utenti reali o accesso Google Workspace.
