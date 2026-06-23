@@ -42,6 +42,11 @@
     .team-choice input{margin-top:.15rem;accent-color:#4f46e5}
     .team-choice small{display:block;font-size:.66rem;color:#64748b;font-weight:700;margin-top:.1rem;line-height:1.2}
     .team-choice-active{background:white;border-color:#4f46e5;box-shadow:0 8px 20px rgba(79,70,229,.08)}
+    .stock-row{background:#f8fafc;border:1px solid #e2e8f0;border-radius:1rem;padding:.8rem;}
+    .stock-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-top:.65rem;}
+    .stock-input{width:100%;border:1px solid #cbd5e1;border-radius:.85rem;padding:.55rem;text-align:center;font-weight:900;background:white;}
+    .stock-alert{display:none;margin-top:.65rem;border:1px solid #fed7aa;background:#fff7ed;color:#9a3412;border-radius:.9rem;padding:.65rem;font-size:.72rem;font-weight:800;line-height:1.25;}
+    .stock-alert.show{display:block;}
 </style>
 
 <script>
@@ -202,11 +207,9 @@ async function twoEmmeApiPost(payload) {
             <div id="before-preview" class="min-h-20 rounded-2xl bg-slate-50 overflow-hidden"></div>
             <div id="after-preview" class="min-h-20 rounded-2xl bg-slate-50 overflow-hidden"></div>
           </div>
+          <textarea id="final-notes" rows="3" placeholder="Note finali, se necessario" class="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none"></textarea>
+          <button id="complete-btn" onclick="completeShift()" disabled class="w-full rounded-2xl bg-slate-200 text-slate-400 py-3.5 font-black">Completa tutte le verifiche obbligatorie</button>
         </div>
-
-        <button onclick="completeShift()" class="w-full bg-emerald-500 text-white rounded-[1.5rem] py-4 font-black text-lg shadow-lg shadow-emerald-200 active:scale-[0.99]">
-          Chiudi intervento
-        </button>
       </section>
 
       <!-- INVENTORY -->
@@ -235,8 +238,12 @@ async function twoEmmeApiPost(payload) {
         </div>
 
         <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3">
-          <h3 class="font-black">Stato Smoobu Calendar</h3>
-          <div id="smoobu-status" class="space-y-2 text-xs"></div>
+          <h3 class="font-black">KPI rapidi</h3>
+          <div class="grid grid-cols-3 gap-2 text-center text-xs">
+            <div class="bg-slate-50 rounded-2xl p-3"><b id="kpi-completed" class="text-xl">0</b><span class="block text-slate-400">Log</span></div>
+            <div class="bg-slate-50 rounded-2xl p-3"><b id="kpi-issues" class="text-xl">0</b><span class="block text-slate-400">Anomalie</span></div>
+            <div class="bg-slate-50 rounded-2xl p-3"><b id="kpi-legionella" class="text-xl">0</b><span class="block text-slate-400">Legionella</span></div>
+          </div>
         </div>
       </section>
 
@@ -281,7 +288,7 @@ async function twoEmmeApiPost(payload) {
         <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
           <p class="text-[11px] uppercase tracking-wider font-black text-sky-600">Checklist</p>
           <h2 class="text-xl font-black">Template operativo</h2>
-          <p class="text-xs text-slate-500 mt-1">Ogni voce è obbligatoria: OK oppure Problema con flag.</p>
+          <p class="text-xs text-slate-500 mt-1">Ogni voce è obbligatoria: OK oppure Problema con flag. Le scorte richiedono quantità standard, presente e mancante.</p>
         </div>
         <div id="template-list" class="space-y-3"></div>
       </section>
@@ -295,9 +302,6 @@ async function twoEmmeApiPost(payload) {
         </div>
         <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
           <div id="legionella-register-list" class="space-y-3 text-sm"></div>
-        </div>
-        <div class="bg-purple-50 border border-purple-100 rounded-[2rem] p-4 text-xs text-purple-900">
-          <b>Regola di chiusura:</b> se il turno ha “Procedura legionella prevista”, l'intervento non può essere chiuso finché tutte le voci della fase Legionella sono OK o segnalate con flag. Le segnalazioni non bloccano la chiusura, ma producono alert amministratore.
         </div>
       </section>
 
@@ -339,7 +343,7 @@ async function twoEmmeApiPost(payload) {
     <!-- FOOTER COPYRIGHT -->
     <footer class="px-4 py-6 text-center text-[10px] text-slate-400 bg-slate-50">
       <strong>© 2026 2EMME RE & Consulting</strong><br>
-      2EMME Cleaning™ - Mobile Housekeeping Platform - v9 Team Checklist<br>
+      2EMME Cleaning™ - Mobile Housekeeping Platform - v10 Stock Warehouse<br>
       Housekeeping • Inventory • Safety • Compliance - Tutti i diritti riservati.
     </footer>
   </div>
@@ -367,8 +371,6 @@ async function twoEmmeApiPost(payload) {
       { apartment:'The NoLo Suite', label:'The NoLo Apartment / Suite - Bassano 32', calendarId:'3u9918h52i0001phaqmmgs5f158ha2d2@import.calendar.google.com' }
     ];
 
-    // Dati ospite importati dai calendari Smoobu disponibili al 23/06/2026.
-    // Nota privacy: email, prezzi e note di pagamento non vengono mostrati alle addette.
     const SMOOBU_RESERVATIONS = [
       { apartment:'Masotto Terrace View', guestName:'Daniel Arnoud Knottenbelt', bookingCode:'Non presente nel Calendar', eventRef:'Smoobu event: ...66rrd', channel:'Direct booking', checkIn:'2026-06-17', checkOut:'2026-07-18', guests:1, nights:31, status:'Prenotazione attiva' },
       { apartment:'The NoLo Heritage', guestName:'Yuniel José Abreu López', bookingCode:'Non presente nel Calendar', eventRef:'Smoobu event: ...66rrd', channel:'Direct booking', checkIn:'2026-05-27', checkOut:'2026-06-26', guests:1, nights:30, status:'Check-out previsto' },
@@ -386,131 +388,83 @@ async function twoEmmeApiPost(payload) {
     ];
 
     const phases = [
-      { title:'Ingresso', icon:'fa-door-open', items:[
-        'Chiavi ospite: verificare presenza e integrità.',
-        'Batteria Ring: collegare se richiesto nelle note intervento.'
-      ]},
-      { title:'Sicurezza', icon:'fa-shield-halved', items:[
-        'Rilevatore di fumo: verificare presenza e integrità.',
-        'Estintore: presente, integro e posizionato correttamente.',
-        'Kit primo soccorso: presente, integro e nella corretta posizione.'
-      ]},
-      { title:'Scorte staff', icon:'fa-box-open', items:[
-        'Sigillo box materiali pulizia: verificare che sia intatto. Segnalare se rotto.',
-        'Guanti monouso.', 'Detersivo per pavimenti.', 'Spray per vetri.', 'Spray anticalcare.', 'Spray multiuso.',
-        'Panni Swiffer.', 'Spray per ambiente.', 'Sigilli rossi.', 'Detersivo per i piatti.'
-      ]},
-      { title:'Scorte ospiti', icon:'fa-gift', items:[
-        'Sigillo box scorte ospiti: verificare che sia intatto. Segnalare se rotto.',
-        '1 spray multiuso.', '6 rotoli carta igienica.', '10 capsule lavatrice.', '10 capsule lavastoviglie.',
-        '1 ricarica sapone mani.', 'Bagnoschiuma.', 'Shampoo.'
-      ]},
-      { title:'Bagno', icon:'fa-bath', items:[
-        'Controllo danni o mancanze evidenti. Fotografare solo se molto sporco o danneggiato.',
-        'Asciugacapelli: controllare presenza.', 'Rifiuti: svuotare cestino.', 'Doccia: pulire a fondo box doccia.',
-        'Pulire e igienizzare sanitari, pavimenti e specchio.',
-        'Capsule lavatrice: soggiorni < 5 giorni = 1 capsula; soggiorni lunghi = 2 capsule.',
-        'Carta igienica: < 7 giorni = 2 rotoli; > 7 giorni = 3 rotoli.',
-        'Sapone mani: controllare presenza e livello dispenser.',
-        'Set asciugamani: 1 set per ospite per soggiorni < 5 giorni.'
-      ]},
-      { title:'Cucina', icon:'fa-kitchen-set', items:[
-        'Controllo danni o mancanze evidenti. Fotografare solo se molto sporca o danneggiata.',
-        'Inventario cucina: controllo sommario.', 'Stoviglie: lavare a mano se poche o avviare lavastoviglie.',
-        'Pulizia standard superfici.', 'Saponi: mani e piatti vicino al lavandino.',
-        'Frigorifero: pulire interno e gettare alimenti residui.', 'Pensili: gettare cibo sfuso lasciato dagli ospiti.',
-        'Lavastoviglie: vuota e pulita.', 'Capsule lavastoviglie: < 5 giorni = 1; soggiorni lunghi = 2.',
-        'Sacchetti spazzatura: brevi = 2 scorta; lunghi = 4 scorta.',
-        'Rifiuti: buttare spazzatura. Fotografare differenziata non corretta.',
-        'Dotazioni ospite: sapone piatti, spray multiuso, spugne piatti e altri usi.'
-      ]},
-      { title:'Camera', icon:'fa-bed', items:[
-        'Controllo danni o mancanze evidenti. Fotografare solo se molto sporca o danneggiata.',
-        'Pulizia standard stanza.',
-        'Letto ottobre-aprile: inserire piumino nel copripiumino.',
-        'Letto maggio-settembre: senza piumino, lasciarlo piegato nell armadio.',
-        'Ritirare tutta la biancheria usata.',
-        'Telecomandi TV e condizionatore: presenza, funzionamento e batterie.',
-        'Business Booking.com: asse da stiro, ferro da stiro, 10 grucce.',
-        'Biancheria letto: 1 copripiumino, 2 federe, 1 lenzuolo con angoli.',
-        'Verificare coprimaterasso e copricuscini.'
-      ]},
-      { title:'Alto contatto', icon:'fa-hand-sparkles', items:[
-        'Disinfettare interruttori luce e placche.',
-        'Disinfettare telecomando TV e telecomando climatizzatore.',
-        'Disinfettare maniglie porte, finestre, armadi e cassetti.',
-        'Disinfettare pomelli, corrimano e punti di presa frequente.',
-        'Disinfettare citofono, Nuki, tastierini, pulsanti e campanello.',
-        'Disinfettare pulsanti elettrodomestici, rubinetti e miscelatori.',
-        'Disinfettare tavolo, sedie, comodini e superfici toccate frequentemente.'
-      ]},
-      { title:'Legionella', icon:'fa-bacteria', requiresLegionella:true, items:[
-        'Aprire le finestre prima del flussaggio per aerare l ambiente.',
-        'Far scorrere acqua calda per 5 minuti da rubinetti, doccia e bidet evitando aerosol diretto.',
-        'Svitare e controllare rompigetto e soffione doccia se previsto dalla procedura.',
-        'Rimuovere calcare visibile da rompigetto, soffione e terminali acqua.',
-        'Eseguire disinfezione clorata dei componenti smontabili secondo procedura interna.',
-        'Risciacquare, rimontare e verificare corretto flusso acqua.',
-        'Segnalare impossibilità di esecuzione, ostruzioni, calcare eccessivo o componenti mancanti.'
-      ]},
-      { title:'Biancheria', icon:'fa-shirt', items:[
-        'Scorta biancheria ospite sigillata: sigillo rosso intatto. Segnalare sempre se usato.',
-        'Contenuto scorta ospite: 2 set asciugamani, 1 set letto.',
-        'Soggiorni > 5 giorni: ospite autorizzato all uso. Controllare presenza prima di sigillare.',
-        'Scorta biancheria casa uso staff: sigillo rosso intatto all arrivo.',
-        'Usare scorta casa per cambio e reintegrare con biancheria pulita portata dallo staff.',
-        'Risigillare sempre a fine pulizia.'
-      ]},
-      { title:'Finale', icon:'fa-circle-check', items:[
-        'Riporre materiali di scorta e apporre sigilli.',
-        'Piante: controllare stato, gettare quelle secche o morte.',
-        'Nuki Bridge: verificare collegamento alla presa.',
-        'Modem internet: collegato e funzionante.',
-        'Chiavi ospite: lasciarle sul tavolo ingresso.',
-        'Profumazione: spray ambiente in bagno e ingresso.',
-        'Utenze: spegnere luci e apparecchiature elettroniche.',
-        'Infissi: chiudere finestre e lasciare persiane aperte.'
-      ]}
+      { title:'Ingresso', icon:'fa-door-open', items:['Chiavi ospite: verificare presenza e integrità.','Batteria Ring: collegare se richiesto nelle note intervento.']},
+      { title:'Sicurezza', icon:'fa-shield-halved', items:['Rilevatore di fumo: verificare presenza e integrità.','Estintore: presente, integro e posizionato correttamente.','Kit primo soccorso: presente, integro e nella corretta posizione.']},
+      { title:'Scorte staff', icon:'fa-box-open', items:[]},
+      { title:'Scorte ospiti', icon:'fa-gift', items:[]},
+      { title:'Bagno', icon:'fa-bath', items:['Controllo danni o mancanze evidenti. Fotografare solo se molto sporco o danneggiato.','Asciugacapelli: controllare presenza.','Rifiuti: svuotare cestino.','Doccia: pulire a fondo box doccia.','Pulire e igienizzare sanitari, pavimenti e specchio.','Capsule lavatrice: soggiorni < 5 giorni = 1 capsula; soggiorni lunghi = 2 capsule.','Carta igienica: < 7 giorni = 2 rotoli; > 7 giorni = 3 rotoli.','Sapone mani: controllare presenza e livello dispenser.','Set asciugamani: 1 set per ospite per soggiorni < 5 giorni.']},
+      { title:'Cucina', icon:'fa-kitchen-set', items:['Controllo danni o mancanze evidenti. Fotografare solo se molto sporca o danneggiata.','Inventario cucina: controllo sommario.','Stoviglie: lavare a mano se poche o avviare lavastoviglie.','Pulizia standard superfici.','Saponi: mani e piatti vicino al lavandino.','Frigorifero: pulire interno e gettare alimenti residui.','Pensili: gettare cibo sfuso lasciato dagli ospiti.','Lavastoviglie: vuota e pulita.','Capsule lavastoviglie: < 5 giorni = 1; soggiorni lunghi = 2.','Sacchetti spazzatura: brevi = 2 scorta; lunghi = 4 scorta.','Rifiuti: buttare spazzatura. Fotografare differenziata non corretta.','Dotazioni ospite: sapone piatti, spray multiuso, spugne piatti e altri usi.']},
+      { title:'Camera', icon:'fa-bed', items:['Controllo danni o mancanze evidenti. Fotografare solo se molto sporca o danneggiata.','Pulizia standard stanza.','Letto ottobre-aprile: inserire piumino nel copripiumino.','Letto maggio-settembre: senza piumino, lasciarlo piegato nell armadio.','Ritirare tutta la biancheria usata.','Telecomandi TV e condizionatore: presenza, funzionamento e batterie.','Business Booking.com: asse da stiro, ferro da stiro, 10 grucce.','Biancheria letto: 1 copripiumino, 2 federe, 1 lenzuolo con angoli.','Verificare coprimaterasso e copricuscini.']},
+      { title:'Alto contatto', icon:'fa-hand-sparkles', items:['Disinfettare interruttori luce e placche.','Disinfettare telecomando TV e telecomando climatizzatore.','Disinfettare maniglie porte, finestre, armadi e cassetti.','Disinfettare pomelli, corrimano e punti di presa frequente.','Disinfettare citofono, Nuki, tastierini, pulsanti e campanello.','Disinfettare pulsanti elettrodomestici, rubinetti e miscelatori.','Disinfettare tavolo, sedie, comodini e superfici toccate frequentemente.']},
+      { title:'Legionella', icon:'fa-bacteria', requiresLegionella:true, items:['Aprire le finestre prima del flussaggio per aerare l ambiente.','Far scorrere acqua calda per 5 minuti da rubinetti, doccia e bidet evitando aerosol diretto.','Svitare e controllare rompigetto e soffione doccia se previsto dalla procedura.','Rimuovere calcare visibile da rompigetto, soffione e terminali acqua.','Eseguire disinfezione clorata dei componenti smontabili secondo procedura interna.','Risciacquare, rimontare e verificare corretto flusso acqua.','Segnalare impossibilità di esecuzione, ostruzioni, calcare eccessivo o componenti mancanti.']},
+      { title:'Biancheria', icon:'fa-shirt', items:['Scorta biancheria ospite sigillata: sigillo rosso intatto. Segnalare sempre se usato.','Contenuto scorta ospite: 2 set asciugamani, 1 set letto.','Soggiorni > 5 giorni: ospite autorizzato all uso. Controllare presenza prima di sigillare.','Scorta biancheria casa uso staff: sigillo rosso intatto all arrivo.','Usare scorta casa per cambio e reintegrare con biancheria pulita portata dallo staff.','Risigillare sempre a fine pulizia.']},
+      { title:'Finale', icon:'fa-circle-check', items:['Riporre materiali di scorta e apporre sigilli.','Piante: controllare stato, gettare quelle secche o morte.','Nuki Bridge: verificare collegamento alla presa.','Modem internet: collegato e funzionante.','Chiavi ospite: lasciarle sul tavolo ingresso.','Profumazione: spray ambiente in bagno e ingresso.','Utenze: spegnere luci e apparecchiature elettroniche.','Infissi: chiudere finestre e lasciare persiane aperte.']}
     ];
 
+    const stockStandards = {
+      'Scorte staff': [
+        { sku:'GUANTI_MONOUSO', name:'Guanti monouso', standard:1, unit:'conf.' },
+        { sku:'DETERSIVO_PAVIMENTI', name:'Detersivo pavimenti', standard:1, unit:'flacone' },
+        { sku:'SPRAY_VETRI', name:'Spray vetri', standard:1, unit:'flacone' },
+        { sku:'SPRAY_ANTICALCARE', name:'Spray anticalcare', standard:1, unit:'flacone' },
+        { sku:'SPRAY_MULTIUSO_STAFF', name:'Spray multiuso staff', standard:1, unit:'flacone' },
+        { sku:'PANNI_SWIFFER', name:'Panni Swiffer', standard:1, unit:'conf.' },
+        { sku:'SPRAY_AMBIENTE', name:'Spray ambiente', standard:1, unit:'flacone' },
+        { sku:'SIGILLI_ROSSI', name:'Sigilli rossi', standard:10, unit:'pz' },
+        { sku:'DETERSIVO_PIATTI', name:'Detersivo piatti', standard:1, unit:'flacone' }
+      ],
+      'Scorte ospiti': [
+        { sku:'SPRAY_MULTIUSO_OSPITE', name:'Spray multiuso ospite', standard:1, unit:'flacone' },
+        { sku:'CARTA_IGIENICA', name:'Carta igienica', standard:6, unit:'rotoli' },
+        { sku:'CAPSULE_LAVATRICE', name:'Capsule lavatrice', standard:10, unit:'capsule' },
+        { sku:'CAPSULE_LAVASTOVIGLIE', name:'Capsule lavastoviglie', standard:10, unit:'capsule' },
+        { sku:'RICARICA_SAPONE_MANI', name:'Ricarica sapone mani', standard:1, unit:'ricarica' },
+        { sku:'BAGNOSCHIUMA', name:'Bagnoschiuma', standard:1, unit:'flacone' },
+        { sku:'SHAMPOO', name:'Shampoo', standard:1, unit:'flacone' }
+      ]
+    };
+
+    const warehouseDefaults = {
+      GUANTI_MONOUSO:80, DETERSIVO_PAVIMENTI:18, SPRAY_VETRI:18, SPRAY_ANTICALCARE:18,
+      SPRAY_MULTIUSO_STAFF:18, PANNI_SWIFFER:20, SPRAY_AMBIENTE:18, SIGILLI_ROSSI:250,
+      DETERSIVO_PIATTI:18, SPRAY_MULTIUSO_OSPITE:24, CARTA_IGIENICA:180,
+      CAPSULE_LAVATRICE:300, CAPSULE_LAVASTOVIGLIE:300, RICARICA_SAPONE_MANI:24,
+      BAGNOSCHIUMA:24, SHAMPOO:24
+    };
+
     const inventoryGroups = [
-      { title:'Materiali pulizia staff', items:['Guanti monouso','Detersivo pavimenti','Spray vetri','Spray anticalcare','Spray multiuso','Panni Swiffer','Spray ambiente','Sigilli rossi','Detersivo piatti'] },
-      { title:'Scorte ospiti sigillate', items:['1 spray multiuso','6 rotoli carta igienica','10 capsule lavatrice','10 capsule lavastoviglie','Ricarica sapone mani','Bagnoschiuma','Shampoo'] },
-      { title:'Business essentials', items:['Asse da stiro','Ferro da stiro','10 grucce','Asciugacapelli','Telecomandi TV/AC','Coprimaterasso','Copricuscini'] }
+      { title:'Scorte in appartamento - materiali pulizie', stockPhase:'Scorte staff' },
+      { title:'Scorte in appartamento - ospite', stockPhase:'Scorte ospiti' },
+      { title:'Magazzino Bassano', warehouse:true }
     ];
+
+    const issueFlags = ['Mancante','Aperto/sigillo rotto','Danneggiato','Incompleto','Scaduto','Quantità insufficiente','Non verificabile','Foto necessaria'];
 
     let state = JSON.parse(localStorage.getItem('emmeCleaningState') || '{}');
     state.logs = state.logs || [];
     state.issues = state.issues || [];
     state.legionellaRegister = state.legionellaRegister || [];
+    state.magazzinoBassano = state.magazzinoBassano || {...warehouseDefaults};
+    state.movimentiMagazzino = state.movimentiMagazzino || [];
+    state.stockReplenishmentNotifications = state.stockReplenishmentNotifications || [];
     let currentShift = null;
+    let checklistExecutionMode = 'compiled_by_me';
+    let checklistPerformedBy = '';
 
     function saveState(){ localStorage.setItem('emmeCleaningState', JSON.stringify(state)); }
-    function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'), 2600); }
+    function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'), 3300); }
     function todayIT(){ return new Date().toLocaleDateString('it-IT',{weekday:'long', day:'2-digit', month:'long', year:'numeric'}); }
+    function escapeHtml(value){ return String(value || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function formatDate(d){ if(!d) return ''; return new Date(d+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+    function val(id){ return document.getElementById(id)?.value || ''; }
 
     function handleLogin(e){
       e.preventDefault();
       const selectedUser = document.getElementById('login-user').value;
       const pin = String(document.getElementById('login-pin').value || '').trim().replace(/\D/g, '');
-
-      if(pin === '2026'){
-        state.user = 'Supervisore 2EMME';
-        saveState();
-        bootApp();
-        toast('Accesso supervisore completato');
-        return;
-      }
-
-      if(PIN[selectedUser] !== pin){
-        toast('PIN non corretto');
-        return;
-      }
-
-      state.user = selectedUser;
-      saveState();
-      bootApp();
-      toast('Accesso completato');
+      if(pin === '2026'){ state.user = 'Supervisore 2EMME'; saveState(); bootApp(); toast('Accesso supervisore completato'); return; }
+      if(PIN[selectedUser] !== pin){ toast('PIN non corretto'); return; }
+      state.user = selectedUser; saveState(); bootApp(); toast('Accesso completato');
     }
 
     function logout(){ state.user=null; saveState(); location.reload(); }
@@ -524,7 +478,7 @@ async function twoEmmeApiPost(payload) {
       document.getElementById('header-subtitle').textContent = state.user;
       document.getElementById('today-date').textContent = todayIT();
       document.getElementById('whatsapp-link').href = 'https://wa.me/393330000000?text=' + encodeURIComponent('Ciao, ti contatto da 2EMME Cleaning.');
-      setupRoleNavigation(); renderShifts(); renderInventory(); renderSupervisor(); renderPlanning(); renderTemplates();
+      setupRoleNavigation(); renderShifts(); renderInventory(); renderSupervisor(); renderPlanning(); renderTemplates(); renderLogs(); renderLegionellaRegister();
       showView(state.user === 'Supervisore 2EMME' ? 'supervisor' : 'home');
     }
 
@@ -533,21 +487,13 @@ async function twoEmmeApiPost(payload) {
       const isSupervisor = state.user === 'Supervisore 2EMME';
       shifts.filter(s => isSupervisor || s.cleaner.includes(state.user)).forEach(s => {
         const completed = state.logs.some(l => l.shiftId === s.id);
-        box.innerHTML += `
-          <article class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3">
-            <div class="flex items-start justify-between gap-3">
-              <div><h3 class="font-black text-lg leading-tight">${s.apartment}</h3><p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-location-dot mr-1"></i>${PROPERTIES[s.apartment]}</p></div>
-              <span class="px-2.5 py-1 rounded-full text-[10px] font-black ${completed ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-700'}">${completed ? 'COMPLETATO' : 'APERTO'}</span>
-            </div>
-            <div class="grid grid-cols-3 gap-2 text-center text-xs">
-              <div class="bg-slate-50 rounded-2xl p-2"><b>${formatDate(s.date)}</b><span class="block text-slate-400">Data</span></div>
-              <div class="bg-slate-50 rounded-2xl p-2"><b>${s.time}</b><span class="block text-slate-400">Ora</span></div>
-              <div class="bg-slate-50 rounded-2xl p-2"><b>${s.guests}/${s.nights}</b><span class="block text-slate-400">Ospiti/notti</span></div>
-            </div>
-            <div class="rounded-2xl bg-sky-50 border border-sky-100 p-3 text-xs"><div class="font-black text-sky-900 mb-1"><i class="fa-solid fa-user-check mr-1"></i>Ospite e prenotazione</div><div class="grid grid-cols-2 gap-2 text-slate-700"><span><b>Ospite:</b> ${escapeHtml(s.guestName || 'Da associare')}</span><span><b>Booking:</b> ${escapeHtml(s.bookingCode || 'Da associare')}</span><span><b>Canale:</b> ${escapeHtml(s.channel || 'Smoobu')}</span><span><b>Check-out:</b> ${s.checkOut ? formatDate(s.checkOut) : 'Da Smoobu'}</span></div></div>
-            <p class="text-xs text-slate-500 border-l-2 border-sky-400 pl-3">${s.note}</p>
-            <button onclick="startShift(${s.id})" class="w-full bg-emmeBlue text-white rounded-2xl py-3 font-black active:scale-[0.99]">Inizia checklist</button>
-          </article>`;
+        box.innerHTML += `<article class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3">
+          <div class="flex items-start justify-between gap-3"><div><h3 class="font-black text-lg leading-tight">${escapeHtml(s.apartment)}</h3><p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-location-dot mr-1"></i>${escapeHtml(PROPERTIES[s.apartment])}</p></div><span class="px-2.5 py-1 rounded-full text-[10px] font-black ${completed ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-700'}">${completed ? 'COMPLETATO' : 'APERTO'}</span></div>
+          <div class="grid grid-cols-3 gap-2 text-center text-xs"><div class="bg-slate-50 rounded-2xl p-2"><b>${formatDate(s.date)}</b><span class="block text-slate-400">Data</span></div><div class="bg-slate-50 rounded-2xl p-2"><b>${escapeHtml(s.time)}</b><span class="block text-slate-400">Ora</span></div><div class="bg-slate-50 rounded-2xl p-2"><b>${s.guests}/${s.nights}</b><span class="block text-slate-400">Ospiti/notti</span></div></div>
+          <div class="rounded-2xl bg-sky-50 border border-sky-100 p-3 text-xs"><b>Ospite:</b> ${escapeHtml(s.guestName || 'Da associare')}<br><b>Booking:</b> ${escapeHtml(s.bookingCode || 'Da associare')}<br><b>Canale:</b> ${escapeHtml(s.channel || 'Smoobu')}</div>
+          <p class="text-xs text-slate-500 border-l-2 border-sky-400 pl-3">${escapeHtml(s.note)}</p>
+          <button onclick="startShift(${s.id})" class="w-full bg-emmeBlue text-white rounded-2xl py-3 font-black active:scale-[0.99]">Inizia checklist</button>
+        </article>`;
       });
     }
 
@@ -557,227 +503,132 @@ async function twoEmmeApiPost(payload) {
       checklistPerformedBy = state.user;
       document.getElementById('active-apartment').textContent = currentShift.apartment;
       document.getElementById('active-meta').textContent = `${formatDate(currentShift.date)} • ${currentShift.time} • Ospite: ${currentShift.guestName || 'Da associare'} • Prenotazione: ${currentShift.bookingCode || 'Da associare'} • ${currentShift.guests} ospiti • ${currentShift.nights} notti • Legionella: ${currentShift.requiresLegionella ? 'prevista' : 'non prevista'}`;
-      renderTeamExecutionPanel();
-      renderChecklist(); showView('checklist');
+      renderTeamExecutionPanel(); renderChecklist(); showView('checklist');
     }
 
-    function shiftCleaners(shift){
-      return (shift?.cleaner || '').split('&').map(x => x.trim()).filter(Boolean);
-    }
-
-    function isTeamShift(shift){
-      return shiftCleaners(shift).length > 1;
-    }
-
-    function otherShiftCleaners(){
-      return shiftCleaners(currentShift).filter(name => name !== state.user);
-    }
+    function shiftCleaners(shift){ return (shift?.cleaner || '').split('&').map(x => x.trim()).filter(Boolean); }
+    function isTeamShift(shift){ return shiftCleaners(shift).length > 1; }
+    function otherShiftCleaners(){ const cleaners = shiftCleaners(currentShift); return state.user === 'Supervisore 2EMME' ? cleaners : cleaners.filter(name => name !== state.user); }
 
     function renderTeamExecutionPanel(){
       const panel = document.getElementById('team-execution-panel');
-      if(!panel || !currentShift || !isTeamShift(currentShift) || state.user === 'Supervisore 2EMME'){
-        if(panel) panel.classList.add('hidden');
-        return;
-      }
+      if(!panel || !currentShift || !isTeamShift(currentShift)){ if(panel) panel.classList.add('hidden'); return; }
+      const cleaners = shiftCleaners(currentShift);
       const others = otherShiftCleaners();
-      checklistPerformedBy = checklistExecutionMode === 'performed_by_other_operator' ? (checklistPerformedBy || others[0] || '') : state.user;
+      const possibleCompilers = checklistExecutionMode === 'compiled_by_me' ? [state.user] : (others.length ? others : cleaners);
+      checklistPerformedBy = checklistExecutionMode === 'compiled_by_me' ? state.user : (possibleCompilers.includes(checklistPerformedBy) ? checklistPerformedBy : possibleCompilers[0]);
       panel.classList.remove('hidden');
-      panel.innerHTML = `
-        <div class="flex items-start gap-2">
-          <i class="fa-solid fa-people-group text-indigo-600 mt-0.5"></i>
-          <div>
-            <h3 class="font-black text-sm text-indigo-950">Turno in coppia: compilazione checklist</h3>
-            <p class="text-[11px] text-indigo-900 leading-snug">Una sola addetta compila le checklist. L'altra può chiudere il proprio intervento selezionando <b>Effettuata da altro addetto</b>. Verrà registrata come conferma/presa visione, non come compilazione.</p>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 gap-2">
-          <label class="team-choice ${checklistExecutionMode === 'compiled_by_me' ? 'team-choice-active' : ''}">
-            <input type="checkbox" ${checklistExecutionMode === 'compiled_by_me' ? 'checked' : ''} onchange="setExecutionMode('compiled_by_me')">
-            <span><b>Compilo io la checklist</b><small>Devo completare tutte le verifiche obbligatorie.</small></span>
-          </label>
-          <label class="team-choice ${checklistExecutionMode === 'performed_by_other_operator' ? 'team-choice-active' : ''}">
-            <input type="checkbox" ${checklistExecutionMode === 'performed_by_other_operator' ? 'checked' : ''} onchange="setExecutionMode('performed_by_other_operator')">
-            <span><b>Effettuata da altro addetto</b><small>Uso questa opzione se la checklist è stata compilata dalla collega.</small></span>
-          </label>
-        </div>
-        <div id="performed-by-box" class="${checklistExecutionMode === 'performed_by_other_operator' ? '' : 'hidden'} rounded-2xl bg-white/70 border border-indigo-100 p-3">
-          <p class="text-[10px] uppercase font-black text-indigo-500 mb-2">Checklist compilata da</p>
-          <div class="grid grid-cols-1 gap-2">
-            ${others.map(name => `<label class="flag-chip"><input type="checkbox" ${checklistPerformedBy === name ? 'checked' : ''} onchange="setPerformedBy('${escapeAttr(name)}')"> ${escapeHtml(name)}</label>`).join('') || '<span class="text-xs text-slate-500">Nessun altro addetto rilevato nel turno.</span>'}
-          </div>
-        </div>`;
+      panel.innerHTML = `<div class="flex items-start gap-2"><i class="fa-solid fa-people-group text-indigo-600 mt-0.5"></i><div><h3 class="font-black text-sm text-indigo-950">Chi fa la checklist?</h3><p class="text-[11px] text-indigo-900 leading-snug">Turno in coppia: scegli se compili tu la checklist oppure se viene compilata dall'altro addetto. La scelta viene salvata nel registro intervento.</p></div></div>
+      <div class="grid grid-cols-1 gap-2"><label class="team-choice ${checklistExecutionMode === 'compiled_by_me' ? 'team-choice-active' : ''}"><input type="radio" name="checklistExecutionMode" ${checklistExecutionMode === 'compiled_by_me' ? 'checked' : ''} onchange="setExecutionMode('compiled_by_me')"><span><b>Faccio io la checklist</b><small>Compilo personalmente tutte le verifiche obbligatorie.</small></span></label><label class="team-choice ${checklistExecutionMode === 'performed_by_other_operator' ? 'team-choice-active' : ''}"><input type="radio" name="checklistExecutionMode" ${checklistExecutionMode === 'performed_by_other_operator' ? 'checked' : ''} onchange="setExecutionMode('performed_by_other_operator')"><span><b>La fa l'altro addetto</b><small>Io registro solo conferma/presa visione.</small></span></label></div>
+      <div id="performed-by-box" class="${checklistExecutionMode === 'performed_by_other_operator' ? '' : 'hidden'} rounded-2xl bg-white/70 border border-indigo-100 p-3"><p class="text-[10px] uppercase font-black text-indigo-500 mb-2">Checklist compilata da</p><div class="grid grid-cols-1 gap-2">${possibleCompilers.map(name => `<label class="flag-chip"><input type="radio" name="checklistPerformedBy" ${checklistPerformedBy === name ? 'checked' : ''} onchange="setPerformedBy('${escapeHtml(name)}')"> ${escapeHtml(name)}</label>`).join('')}</div></div>`;
     }
-
-    function setExecutionMode(mode){
-      checklistExecutionMode = mode;
-      checklistPerformedBy = mode === 'compiled_by_me' ? state.user : (otherShiftCleaners()[0] || 'Altro addetto');
-      renderTeamExecutionPanel();
-      updateProgress();
-    }
-
-    function setPerformedBy(name){
-      checklistPerformedBy = name;
-      renderTeamExecutionPanel();
-    }
-
-    function isConfirmationOnly(){ return currentShift && isTeamShift(currentShift) && checklistExecutionMode === 'performed_by_other_operator'; }
+    function setExecutionMode(mode){ checklistExecutionMode = mode; checklistPerformedBy = mode === 'compiled_by_me' ? state.user : (otherShiftCleaners()[0] || 'Altro addetto'); renderTeamExecutionPanel(); updateProgress(); }
+    function setPerformedBy(name){ checklistPerformedBy = name; renderTeamExecutionPanel(); updateProgress(); }
 
     function renderChecklist(){
-      const tabs = document.getElementById('phase-tabs'); const container=document.getElementById('checklist-container');
-      tabs.innerHTML=''; container.innerHTML='';
-      phases.filter(p => !p.requiresLegionella || currentShift.requiresLegionella).forEach((phase, pi) => {
-        tabs.innerHTML += `<button onclick="scrollToPhase(${pi})" class="shrink-0 px-4 py-2 rounded-full bg-white border border-slate-100 text-xs font-black shadow-sm"><i class="fa-solid ${phase.icon} mr-1 text-sky-500"></i>${phase.title}</button>`;
-        const items = phase.items.map((text, ii) => checklistRow(phase.title, text, `${pi}-${ii}`)).join('');
-        container.innerHTML += `<section id="phase-${pi}" class="phase-card bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3"><h3 class="font-black text-lg flex items-center gap-2"><i class="fa-solid ${phase.icon} text-sky-500"></i>${phase.title}</h3>${items}</section>`;
+      const tabs = document.getElementById('phase-tabs'); const cont = document.getElementById('checklist-container');
+      tabs.innerHTML = ''; cont.innerHTML = '';
+      const activePhases = phases.filter(p => !p.requiresLegionella || (currentShift && currentShift.requiresLegionella));
+      activePhases.forEach((p, pi) => {
+        tabs.innerHTML += `<a href="#phase-${pi}" class="shrink-0 px-3 py-2 bg-white border border-slate-100 rounded-2xl text-xs font-black text-slate-600"><i class="fa-solid ${p.icon} mr-1 text-sky-500"></i>${escapeHtml(p.title)}</a>`;
+        cont.innerHTML += `<section id="phase-${pi}" class="phase-card bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm" data-phase-title="${escapeHtml(p.title)}"><div class="flex items-center justify-between gap-2 mb-3"><h3 class="font-black"><i class="fa-solid ${p.icon} text-sky-500 mr-2"></i>FASE ${pi+1}: ${escapeHtml(p.title)}</h3><span class="px-2 py-1 rounded-full bg-amber-50 text-amber-700 text-[9px] font-black border border-amber-100">OBBLIGATORIA</span></div><div class="space-y-3">${stockStandards[p.title] ? stockStandards[p.title].map((item, ii)=>renderStockChecklistItem(item, p.title, pi, ii)).join('') : p.items.map((it, ii)=>renderChecklistItem(it, pi, ii)).join('')}</div></section>`;
       });
       updateProgress();
     }
 
-    function checklistRow(phase, text, key){
-      const disabled = isConfirmationOnly() ? 'disabled' : '';
-      const hint = isConfirmationOnly() ? '<p class="text-[10px] text-indigo-500 font-bold mt-2">Checklist indicata come effettuata da altro addetto: questa riga è bloccata in sola conferma.</p>' : '';
-      return `<div id="row-${key}" class="rounded-2xl border border-slate-100 bg-slate-50 p-3 space-y-3" data-check-row data-phase="${escapeAttr(phase)}" data-text="${escapeAttr(text)}">
-        <p class="text-sm font-bold leading-snug">${text}</p>
-        <div class="grid grid-cols-2 gap-2">
-          <label class="mini-toggle"><input ${disabled} type="checkbox" data-ok="${key}" onchange="markOk('${key}')"> OK</label>
-          <label class="mini-toggle"><input ${disabled} type="checkbox" data-problem="${key}" onchange="toggleProblem('${key}')"> Problema</label>
-        </div>
-        <div id="flags-${key}" class="hidden grid grid-cols-1 gap-2 pt-1">
-          ${['Mancante','Aperto/sigillo rotto','Danneggiato','Incompleto','Scaduto','Quantità insufficiente','Non verificabile','Foto necessaria'].map(f => `<label class="flag-chip"><input ${disabled} type="checkbox" data-flag="${key}"> ${f}</label>`).join('')}
-        </div>${hint}
-      </div>`;
+    function renderChecklistItem(itemText, phaseIndex, itemIndex){
+      const id = `p${phaseIndex}-i${itemIndex}`;
+      return `<article id="row-${id}" data-phase="${escapeHtml(phases[phaseIndex].title)}" class="check-row rounded-2xl bg-slate-50 border border-slate-100 p-3 space-y-3"><div class="text-sm leading-snug font-semibold text-slate-800">${escapeHtml(itemText)}</div><div class="flex flex-wrap gap-2"><label class="mini-toggle text-emerald-700"><input type="checkbox" class="task accent-emerald-500" data-id="${id}" data-text="${escapeHtml(itemText)}" onchange="setChecklistOk('${id}')"> OK</label><label class="mini-toggle text-rose-700"><input type="checkbox" class="issue-toggle accent-rose-600" data-id="${id}" onchange="toggleIssue('${id}')"> Segnala problema</label></div><div id="flags-${id}" class="hidden grid grid-cols-1 gap-2 pt-1">${issueFlags.map(flag => `<label class="flag-chip"><input type="checkbox" class="issue-flag" data-id="${id}" value="${escapeHtml(flag)}" onchange="updateProgress()"> ${escapeHtml(flag)}</label>`).join('')}</div></article>`;
     }
 
-    function markOk(key){
-      const ok=document.querySelector(`[data-ok="${key}"]`); const pb=document.querySelector(`[data-problem="${key}"]`);
-      if(ok.checked){ pb.checked=false; document.getElementById(`flags-${key}`).classList.add('hidden'); document.getElementById(`row-${key}`).classList.remove('check-row-problem'); }
+    function renderStockChecklistItem(item, phaseTitle, phaseIndex, itemIndex){
+      const id = `stock-${phaseIndex}-${itemIndex}`;
+      return `<article id="row-${id}" class="check-row stock-row" data-stock-row="1" data-phase="${escapeHtml(phaseTitle)}" data-sku="${escapeHtml(item.sku)}" data-item-name="${escapeHtml(item.name)}" data-unit="${escapeHtml(item.unit)}"><div class="flex items-start justify-between gap-2"><div><div class="text-sm leading-snug font-black text-slate-800">${escapeHtml(item.name)}</div><div class="text-[11px] text-slate-500 font-semibold">Scorta alloggio: inserisci quantità presente. Se manca, viene scaricata dal Magazzino Bassano.</div></div><span class="text-[10px] font-black bg-slate-200 text-slate-700 rounded-full px-2 py-1">STD ${item.standard} ${escapeHtml(item.unit)}</span></div><div class="stock-grid"><label class="text-[10px] font-black text-slate-500 uppercase">Previsto<input readonly class="stock-input stock-standard" value="${item.standard}"></label><label class="text-[10px] font-black text-slate-500 uppercase">Presente<input inputmode="numeric" type="number" min="0" class="stock-input stock-present" placeholder="0" onchange="updateStockShortage('${id}')" oninput="updateStockShortage('${id}')"></label><label class="text-[10px] font-black text-slate-500 uppercase">Manca<input readonly class="stock-input stock-missing" value="0"></label></div><div id="stock-alert-${id}" class="stock-alert"></div><div id="flags-${id}" class="grid grid-cols-1 gap-2 pt-2 hidden">${issueFlags.map(flag => `<label class="flag-chip"><input type="checkbox" class="issue-flag" data-id="${id}" value="${escapeHtml(flag)}" onchange="updateProgress()"> ${escapeHtml(flag)}</label>`).join('')}</div></article>`;
+    }
+
+    function updateStockShortage(id){
+      const row = document.getElementById('row-' + id); if(!row) return;
+      const standard = Number(row.querySelector('.stock-standard')?.value || 0);
+      const presentRaw = row.querySelector('.stock-present')?.value;
+      const present = presentRaw === '' ? null : Number(presentRaw || 0);
+      const missing = present === null ? 0 : Math.max(standard - present, 0);
+      row.querySelector('.stock-missing').value = missing;
+      const alert = document.getElementById('stock-alert-' + id); const flags = document.getElementById('flags-' + id);
+      if(missing > 0){
+        row.classList.add('check-row-problem'); alert.classList.add('show'); flags.classList.remove('hidden');
+        alert.innerHTML = `<i class="fa-solid fa-warehouse mr-1"></i> Mancano <b>${missing}</b> ${escapeHtml(row.dataset.unit)}. Notifica: recarsi al <b>Magazzino Bassano</b> e reintegrare <b>${escapeHtml(row.dataset.itemName)}</b>. Verrà creato scarico magazzino.`;
+        const insuff = [...flags.querySelectorAll('.issue-flag')].find(x => x.value === 'Quantità insufficiente'); if(insuff) insuff.checked = true;
+      } else {
+        row.classList.remove('check-row-problem'); alert.classList.remove('show'); alert.innerHTML = ''; flags.classList.add('hidden'); flags.querySelectorAll('input').forEach(x => x.checked = false);
+      }
       updateProgress();
     }
 
-    function toggleProblem(key){
-      const ok=document.querySelector(`[data-ok="${key}"]`); const pb=document.querySelector(`[data-problem="${key}"]`);
-      if(pb.checked){ ok.checked=false; document.getElementById(`flags-${key}`).classList.remove('hidden'); document.getElementById(`row-${key}`).classList.add('check-row-problem'); }
-      else { document.getElementById(`flags-${key}`).classList.add('hidden'); document.getElementById(`row-${key}`).classList.remove('check-row-problem'); }
-      updateProgress();
+    function setChecklistOk(id){ const ok=document.querySelector(`.task[data-id="${id}"]`); const toggle=document.querySelector(`.issue-toggle[data-id="${id}"]`); const flagsBox=document.getElementById('flags-'+id); const row=document.getElementById('row-'+id); if(ok.checked){ toggle.checked=false; flagsBox.classList.add('hidden'); flagsBox.querySelectorAll('input').forEach(x=>x.checked=false); row.classList.remove('check-row-problem'); } updateProgress(); }
+    function toggleIssue(id){ const toggle=document.querySelector(`.issue-toggle[data-id="${id}"]`); const ok=document.querySelector(`.task[data-id="${id}"]`); const flagsBox=document.getElementById('flags-'+id); const row=document.getElementById('row-'+id); if(toggle.checked){ ok.checked=false; flagsBox.classList.remove('hidden'); row.classList.add('check-row-problem'); } else { flagsBox.classList.add('hidden'); flagsBox.querySelectorAll('input').forEach(x=>x.checked=false); row.classList.remove('check-row-problem'); } updateProgress(); }
+
+    function collectStockShortages(){
+      return [...document.querySelectorAll('[data-stock-row="1"]')].map(row => {
+        const standard = Number(row.querySelector('.stock-standard')?.value || 0); const presentRaw = row.querySelector('.stock-present')?.value;
+        if(presentRaw === '') return null;
+        const present = Number(presentRaw || 0); const missing = Math.max(standard - present, 0); if(missing <= 0) return null;
+        const flags = [...row.querySelectorAll('.issue-flag:checked')].map(x => x.value);
+        return { sku: row.dataset.sku, item: row.dataset.itemName, unit: row.dataset.unit, phase: row.dataset.phase, standard, present, missing, flags: flags.length ? flags : ['Quantità insufficiente'] };
+      }).filter(Boolean);
     }
 
+    function collectChecklistIssues(){
+      const issues = [];
+      document.querySelectorAll('.issue-toggle:checked').forEach(toggle => { const id = toggle.dataset.id; const text = document.querySelector(`.task[data-id="${id}"]`)?.dataset.text || 'Voce checklist'; const phase = document.getElementById(`row-${id}`)?.dataset.phase || ''; const flags = [...document.querySelectorAll(`.issue-flag[data-id="${id}"]:checked`)].map(x => x.value); issues.push({ item:text, text, phase, flags:flags.length ? flags : ['Problema segnalato'], shiftId:currentShift?.id || null, apartment:currentShift?.apartment || '', date:new Date().toISOString(), user:state.user, checklistCompiledBy:state.user }); });
+      collectStockShortages().forEach(shortage => issues.push({ item:shortage.item, text:`${shortage.item}: standard ${shortage.standard}, presenti ${shortage.present}, mancanti ${shortage.missing} ${shortage.unit}`, phase:shortage.phase, flags:shortage.flags, shiftId:currentShift?.id || null, apartment:currentShift?.apartment || '', date:new Date().toISOString(), user:state.user, checklistCompiledBy:state.user, stockShortage:true, warehouse:'Magazzino Bassano', quantityToReplenish:shortage.missing }));
+      return issues;
+    }
+
+    function rowIsCompleted(row){ if(row.dataset.stockRow === '1') return row.querySelector('.stock-present')?.value !== ''; const ok=row.querySelector('.task')?.checked; const issue=row.querySelector('.issue-toggle')?.checked; const flags=row.querySelectorAll('.issue-flag:checked').length; return ok || (issue && flags > 0); }
     function updateProgress(){
-      const rows=[...document.querySelectorAll('[data-check-row]')];
-      const done=rows.filter(r => {
-        const ok=r.querySelector('[data-ok]')?.checked;
-        const pb=r.querySelector('[data-problem]')?.checked;
-        const hasFlag=[...r.querySelectorAll('[data-flag]')].some(f=>f.checked);
-        return ok || (pb && hasFlag);
-      }).length;
-      const pct = rows.length ? Math.round(done/rows.length*100) : 0;
-      const progressText = document.getElementById('progress-text');
-      const progressBar = document.getElementById('progress-bar');
-      const hint = document.getElementById('completion-hint');
-      if(progressText) progressText.textContent = isConfirmationOnly() ? 'Conferma altro addetto' : pct + '%';
-      if(progressBar) progressBar.style.width = isConfirmationOnly() ? '100%' : pct + '%';
-      if(hint && isConfirmationOnly()) hint.textContent = `Stai confermando che la checklist è stata effettuata da ${checklistPerformedBy || 'altro addetto'}. Verrà registrata una conferma team.`;
-      else if(hint) hint.textContent = "Per chiudere l'intervento devi completare tutte le checklist assegnate. Le verifiche Scorte Staff e Scorte Ospiti sono sempre obbligatorie. La procedura Legionella è obbligatoria quando prevista. Le segnalazioni sono ammesse solo con almeno un flag selezionato.";
+      const rows=[...document.querySelectorAll('.check-row')]; const done=rows.filter(rowIsCompleted).length; const missingFlags=rows.filter(row=>row.dataset.stockRow!=='1' && row.querySelector('.issue-toggle')?.checked && row.querySelectorAll('.issue-flag:checked').length===0).length; const otherMode=checklistExecutionMode==='performed_by_other_operator'; const pct=otherMode?100:(rows.length?Math.round(done/rows.length*100):0);
+      document.getElementById('progress-text').textContent = otherMode ? 'Altro addetto' : pct + '%'; document.getElementById('progress-bar').style.width = pct + '%';
+      const hint=document.getElementById('completion-hint'); const remaining=rows.length-done; if(hint){ hint.textContent = otherMode ? `Modalità team: chiusura registrata come effettuata da altro addetto (${checklistPerformedBy || 'da selezionare'}).` : (missingFlags ? `Ci sono ${missingFlags} segnalazioni senza flag.` : (remaining ? `Mancano ${remaining} verifiche obbligatorie. Per le scorte inserisci la quantità presente.` : 'Tutte le verifiche obbligatorie sono completate. Puoi chiudere l intervento.')); hint.className='mt-2 text-[11px] leading-snug font-semibold '+(otherMode || (!remaining && !missingFlags) ? 'text-emerald-700' : 'text-amber-700'); }
+      const btn=document.getElementById('complete-btn'); if(otherMode && checklistPerformedBy){ btn.disabled=false; btn.className='w-full rounded-2xl bg-indigo-600 text-white py-3.5 font-black shadow-lg shadow-indigo-100'; btn.textContent='Chiudi come effettuata da altro addetto'; return; } if(rows.length && done===rows.length && missingFlags===0){ btn.disabled=false; btn.className='w-full rounded-2xl bg-emerald-500 text-white py-3.5 font-black shadow-lg shadow-emerald-100'; btn.textContent='Completa intervento'; } else { btn.disabled=true; btn.className='w-full rounded-2xl bg-slate-200 text-slate-400 py-3.5 font-black'; btn.textContent='Completa tutte le verifiche obbligatorie'; }
     }
+
+    function createWarehouseMovement(shortage, completedAt){ return { id:'MOV-'+Date.now()+'-'+shortage.sku, date:completedAt, warehouse:'Magazzino Bassano', apartment:currentShift?.apartment || '', sku:shortage.sku, item:shortage.item, quantity:shortage.missing, unit:shortage.unit, type:'Scarico', reason:'Reintegro scorte appartamento da checklist pulizie', shiftId:currentShift?.id || null, operator:state.user }; }
 
     function completeShift(){
-      if(!currentShift){ toast('Nessun turno attivo'); return; }
-
-      if(isConfirmationOnly()){
-        if(!checklistPerformedBy || checklistPerformedBy === state.user){ toast('Seleziona chi ha compilato la checklist'); return; }
-        const log = {
-          id: Date.now(), shiftId: currentShift.id, apartment: currentShift.apartment, operator: state.user,
-          executionMode:'Effettuata da altro addetto', checklistCompiledBy:checklistPerformedBy, checklistConfirmedBy:state.user,
-          teamShift:true, needsCompilerLog:true, date:new Date().toISOString(), result:'Conferma team registrata', issues:0
-        };
-        state.logs.push(log);
-        saveState();
-        renderShifts(); renderLogs(); renderLegionellaRegister();
-        toast('Conferma registrata. Checklist attribuita a ' + checklistPerformedBy);
-        showView('home');
-        return;
-      }
-
-      const rows=[...document.querySelectorAll('[data-check-row]')];
-      const incomplete=[]; const issues=[];
-      rows.forEach(r => {
-        const key = r.id.replace('row-','');
-        const ok=r.querySelector('[data-ok]')?.checked;
-        const pb=r.querySelector('[data-problem]')?.checked;
-        const flags=[...r.querySelectorAll('[data-flag]')].filter(f=>f.checked).map(f=>f.parentElement.textContent.trim());
-        if(!ok && !pb) incomplete.push(r.dataset.text);
-        if(pb && flags.length===0) incomplete.push(r.dataset.text + ' - problema senza flag');
-        if(pb && flags.length>0) issues.push({ phase:r.dataset.phase, text:r.dataset.text, flags });
-      });
-      if(incomplete.length){ toast('Checklist incompleta: verifica OK o Problema con flag'); return; }
-      const log = { id:Date.now(), shiftId:currentShift.id, apartment:currentShift.apartment, operator:state.user, executionMode:'Compilata da me', checklistCompiledBy:state.user, checklistConfirmedBy:'', teamShift:isTeamShift(currentShift), needsCompilerLog:false, date:new Date().toISOString(), result:'Completato', issues:issues.length };
-      state.logs.push(log); issues.forEach(i => state.issues.push({...i, apartment:currentShift.apartment, operator:state.user, shiftId:currentShift.id, date:new Date().toISOString(), status:'Aperta'}));
-      if(currentShift.requiresLegionella){ state.legionellaRegister.push({ id:Date.now(), apartment:currentShift.apartment, operator:state.user, date:new Date().toISOString(), status:'Eseguita', shiftId:currentShift.id }); }
-      saveState(); renderShifts(); renderLogs(); renderLegionellaRegister(); toast('Intervento chiuso e registrato'); showView('home');
+      if(!currentShift) return;
+      const performedByOther = checklistExecutionMode === 'performed_by_other_operator';
+      const stockShortages = performedByOther ? [] : collectStockShortages();
+      const checklistIssues = performedByOther ? [] : collectChecklistIssues();
+      checklistIssues.forEach(issue => state.issues.unshift(issue));
+      const completedAt = new Date().toISOString();
+      stockShortages.forEach(shortage => { const movement=createWarehouseMovement(shortage, completedAt); state.movimentiMagazzino.unshift(movement); state.magazzinoBassano[shortage.sku]=Math.max(Number(state.magazzinoBassano[shortage.sku] || 0)-shortage.missing,0); state.stockReplenishmentNotifications.unshift({ date:completedAt, operator:state.user, apartment:currentShift.apartment, item:shortage.item, quantity:shortage.missing, unit:shortage.unit, message:`Recarsi al Magazzino Bassano e reintegrare ${shortage.missing} ${shortage.unit} di ${shortage.item} per ${currentShift.apartment}.` }); });
+      state.logs.unshift({ shiftId:currentShift.id, apartment:currentShift.apartment, date:completedAt, operator:state.user, checklistExecutionMode:performedByOther?'Effettuata da altro addetto':'Compilata da me', checklistCompiledBy:performedByOther?checklistPerformedBy:state.user, checklistConfirmedBy:performedByOther?state.user:'', teamShift:isTeamShift(currentShift), notes:performedByOther?`Checklist effettuata da altro addetto: ${checklistPerformedBy}. Conferma registrata da ${state.user}.`:(document.getElementById('final-notes').value || (stockShortages.length ? `Reintegro magazzino richiesto per ${stockShortages.length} prodotti.` : (checklistIssues.length?'Intervento completato con segnalazioni flaggate.':'Tutto regolare'))), issuesCount:checklistIssues.length, stockShortages, warehouseMovements:stockShortages.length, needsCompilerLog:performedByOther });
+      if(currentShift.requiresLegionella && !performedByOther){ state.legionellaRegister.unshift({ shiftId:currentShift.id, apartment:currentShift.apartment, address:PROPERTIES[currentShift.apartment] || '', date:completedAt, operator:state.user, guestName:currentShift.guestName || '', bookingCode:currentShift.bookingCode || '', checkIn:currentShift.checkIn || '', checkOut:currentShift.checkOut || '', outcome:'Completata', procedure:'Flussaggio acqua calda 5 minuti + controllo/igiene terminali se previsto + segnalazione anomalie' }); }
+      saveState(); renderShifts(); renderInventory(); renderSupervisor(); renderLogs(); renderLegionellaRegister(); toast(performedByOther ? 'Conferma salvata: checklist effettuata da altro addetto' : (stockShortages.length ? `Reintegro richiesto: vai al Magazzino Bassano per ${stockShortages.length} prodotti` : (checklistIssues.length ? `Intervento salvato con ${checklistIssues.length} segnalazioni` : 'Intervento completato e salvato offline'))); showView('home');
     }
 
     function renderInventory(){
-      const box=document.getElementById('inventory-list'); if(!box) return; box.innerHTML='';
-      inventoryGroups.forEach(group => {
-        box.innerHTML += `<section class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><h3 class="font-black mb-3">${group.title}</h3><div class="space-y-2">${group.items.map(x=>`<label class="mini-toggle justify-between"><span>${x}</span><input type="checkbox"></label>`).join('')}</div></section>`;
+      const box=document.getElementById('inventory-list'); box.innerHTML='';
+      const latest=state.stockReplenishmentNotifications.slice(0,5);
+      if(latest.length){ box.innerHTML += `<section class="bg-orange-50 rounded-[2rem] p-4 border border-orange-100 shadow-sm"><h3 class="font-black text-orange-900 mb-2"><i class="fa-solid fa-bell mr-2"></i>Notifiche reintegro</h3><div class="space-y-2">${latest.map(n=>`<div class="bg-white/80 border border-orange-100 rounded-2xl p-3 text-xs font-bold text-orange-900">${escapeHtml(n.message)}<br><span class="text-orange-600">${new Date(n.date).toLocaleString('it-IT')}</span></div>`).join('')}</div></section>`; }
+      inventoryGroups.forEach(g=>{
+        if(g.warehouse){ const allItems=Object.values(stockStandards).flat(); box.innerHTML += `<section class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><h3 class="font-black mb-1"><i class="fa-solid fa-warehouse text-amber-600 mr-2"></i>Magazzino Bassano</h3><p class="text-[11px] text-slate-500 font-semibold mb-3">Giacenze generali. Quando manca un prodotto in appartamento viene creato uno scarico automatico dal magazzino.</p><div class="space-y-2">${allItems.map(item=>`<div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50"><span class="text-sm font-medium">${escapeHtml(item.name)}</span><span class="text-[11px] font-black text-slate-700">${Number(state.magazzinoBassano[item.sku] || 0)} ${escapeHtml(item.unit)}</span></div>`).join('')}</div><h4 class="font-black text-sm mt-4 mb-2">Ultimi movimenti</h4><div class="space-y-2">${state.movimentiMagazzino.slice(0,8).map(m=>`<div class="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-xs"><b>${escapeHtml(m.type)} ${escapeHtml(m.item)}</b><br>${escapeHtml(m.quantity)} ${escapeHtml(m.unit)} → ${escapeHtml(m.apartment)}<br><span class="text-slate-500">${new Date(m.date).toLocaleString('it-IT')} • ${escapeHtml(m.operator)}</span></div>`).join('') || '<p class="text-xs text-slate-400">Nessun movimento registrato.</p>'}</div></section>`; return; }
+        const items=stockStandards[g.stockPhase] || []; box.innerHTML += `<section class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><h3 class="font-black mb-1">${escapeHtml(g.title)}</h3><p class="text-[11px] text-slate-500 font-semibold mb-3">Queste sono scorte dell'appartamento. La quantità mancante genera notifica e scarico dal Magazzino Bassano.</p><div class="space-y-2">${items.map(item=>`<div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50"><span class="text-sm font-medium">${escapeHtml(item.name)}</span><span class="text-[10px] font-black text-amber-700 bg-amber-50 px-2 py-1 rounded-full border border-amber-100">STD ${item.standard} ${escapeHtml(item.unit)}</span></div>`).join('')}</div></section>`;
       });
     }
 
-    function renderSupervisor(){
-      const box=document.getElementById('smoobu-status'); if(!box) return;
-      box.innerHTML = SMOOBU_CALENDARS.map(c => `<div class="rounded-2xl bg-slate-50 p-3 border border-slate-100"><b>${c.apartment}</b><br><span class="text-slate-500 break-all">${c.calendarId}</span></div>`).join('');
-    }
-
-    function renderPlanning(){
-      const apt=document.getElementById('admin-apartment'); if(apt && !apt.options.length){ Object.keys(PROPERTIES).forEach(k => apt.innerHTML += `<option>${k}</option>`); }
-      const list=document.getElementById('planning-list'); if(!list) return;
-      list.innerHTML = shifts.map(s => `<article class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><h3 class="font-black">${s.apartment}</h3><p class="text-xs text-slate-500">${formatDate(s.date)} • ${s.time} • ${s.cleaner}</p><p class="text-xs mt-2">${s.note}</p></article>`).join('');
-    }
-
-    function addShiftFromAdmin(){
-      const c1=document.getElementById('admin-cleaner1').value; const c2=document.getElementById('admin-cleaner2').value;
-      const s={ id:Date.now(), date:val('admin-date'), time:val('admin-time'), apartment:val('admin-apartment'), guestName:val('admin-guest'), bookingCode:val('admin-booking'), channel:val('admin-channel') || 'Manuale', checkIn:val('admin-checkin'), checkOut:val('admin-checkout'), guests:Number(val('admin-guests')||1), nights:Number(val('admin-nights')||1), requiresLegionella:document.getElementById('admin-legionella').checked, note:val('admin-note') || 'Turno creato manualmente.', cleaner:c2 ? `${c1} & ${c2}` : c1 };
-      shifts.push(s); renderPlanning(); renderShifts(); toast('Turno aggiunto');
-    }
-
-    function renderTemplates(){
-      const box=document.getElementById('template-list'); if(!box) return;
-      box.innerHTML = phases.map(p => `<details class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><summary class="font-black cursor-pointer"><i class="fa-solid ${p.icon} text-sky-500 mr-2"></i>${p.title}</summary><ul class="mt-3 space-y-2 text-sm text-slate-600">${p.items.map(i=>`<li class="border-l-2 border-sky-200 pl-3">${i}</li>`).join('')}</ul></details>`).join('');
-    }
-
-    function renderLogs(){
-      const box=document.getElementById('log-list'); if(!box) return;
-      const issueRows = state.issues.map(i => `<div class="rounded-2xl bg-rose-50 border border-rose-100 p-3"><b>${i.apartment}</b><br><span>${i.phase}: ${i.text}</span><br><span class="text-rose-700 font-bold">${i.flags.join(', ')}</span></div>`).join('');
-      const logs = state.logs.map(l=>`<div class="rounded-2xl bg-slate-50 border border-slate-100 p-3"><b>${l.apartment}</b><br>${l.operator} • ${new Date(l.date).toLocaleString('it-IT')} • ${l.executionMode || 'Log'}${l.checklistCompiledBy ? '<br>Checklist compilata da: '+escapeHtml(l.checklistCompiledBy) : ''}${l.checklistConfirmedBy ? '<br>Confermata da: '+escapeHtml(l.checklistConfirmedBy) : ''}</div>`).join('');
-      box.innerHTML = logs + issueRows || '<p class="text-slate-400">Nessun log.</p>';
-    }
-
-    function renderLegionellaRegister(){
-      const box=document.getElementById('legionella-register-list'); if(!box) return;
-      box.innerHTML = state.legionellaRegister.map(r=>`<div class="rounded-2xl bg-purple-50 border border-purple-100 p-3"><b>${r.apartment}</b><br>${r.operator} • ${new Date(r.date).toLocaleString('it-IT')}<br><span class="font-black text-purple-700">${r.status}</span></div>`).join('') || '<p class="text-slate-400">Nessun registro ancora.</p>';
-    }
-
-    function setupRoleNavigation(){
-      const nav=document.getElementById('nav-grid'); const isSup=state.user==='Supervisore 2EMME';
-      const items = isSup
-        ? [['home','fa-house','Home'],['supervisor','fa-user-tie','Admin'],['inventory','fa-boxes-stacked','Scorte'],['logs','fa-list','Log']]
-        : [['home','fa-house','Home'],['inventory','fa-boxes-stacked','Scorte'],['logs','fa-list','Log']];
-      nav.className = `grid grid-cols-${items.length} px-2 py-2`;
-      nav.innerHTML = items.map(i => `<button onclick="showView('${i[0]}')" class="py-2 text-[11px] font-black text-slate-500"><i class="fa-solid ${i[1]} block text-lg mb-0.5"></i>${i[2]}</button>`).join('');
-    }
-
-    function showView(name){
-      ['home','checklist','inventory','supervisor','planning','templates','legionella','logs'].forEach(v => { const el=document.getElementById('view-'+v); if(el) el.classList.toggle('hidden', v!==name); });
-      window.scrollTo({top:0, behavior:'smooth'});
-    }
-    function scrollToPhase(i){ document.getElementById('phase-'+i)?.scrollIntoView({behavior:'smooth'}); }
+    function setupRoleNavigation(){ const nav=document.getElementById('nav-grid'); const isSupervisor=state.user==='Supervisore 2EMME'; const items=isSupervisor?[['supervisor','fa-chart-line','Dashboard'],['planning','fa-calendar-plus','Turni'],['inventory','fa-boxes-stacked','Scorte'],['logs','fa-clipboard-list','Log'],['legionella','fa-bacteria','Legionella']]:[['home','fa-house','Home'],['inventory','fa-boxes-stacked','Scorte'],['logs','fa-list','Log'],['supervisor','fa-headset','Help']]; nav.className=items.length===5?'grid grid-cols-5 px-2 py-2':'grid grid-cols-4 px-2 py-2'; nav.innerHTML=items.map(([view,icon,label])=>`<button onclick="showView('${view}')" class="rounded-2xl py-2 text-xs font-bold text-slate-400"><i class="fa-solid ${icon} block text-lg mb-0.5"></i>${label}</button>`).join(''); }
+    function renderSupervisor(){ const completed=document.getElementById('kpi-completed'); if(completed) completed.textContent=state.logs.length; const issues=document.getElementById('kpi-issues'); if(issues) issues.textContent=state.issues.length; const leg=document.getElementById('kpi-legionella'); if(leg) leg.textContent=state.legionellaRegister.length; }
+    function renderPlanning(){ const apt=document.getElementById('admin-apartment'); if(apt && !apt.options.length){ Object.keys(PROPERTIES).forEach(k=>apt.innerHTML+=`<option>${escapeHtml(k)}</option>`); } const list=document.getElementById('planning-list'); if(list) list.innerHTML=shifts.map(s=>`<article class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><h3 class="font-black">${escapeHtml(s.apartment)}</h3><p class="text-xs text-slate-500">${formatDate(s.date)} • ${escapeHtml(s.time)} • ${escapeHtml(s.cleaner)}</p><p class="text-xs mt-2">${escapeHtml(s.note)}</p></article>`).join(''); }
+    function addShiftFromAdmin(){ const c1=val('admin-cleaner1'); const c2=val('admin-cleaner2'); shifts.push({ id:Date.now(), date:val('admin-date'), time:val('admin-time'), apartment:val('admin-apartment'), guestName:val('admin-guest'), bookingCode:val('admin-booking'), channel:val('admin-channel')||'Manuale', checkIn:val('admin-checkin'), checkOut:val('admin-checkout'), guests:Number(val('admin-guests')||1), nights:Number(val('admin-nights')||1), requiresLegionella:document.getElementById('admin-legionella').checked, note:val('admin-note')||'Turno creato manualmente.', cleaner:c2?`${c1} & ${c2}`:c1 }); renderPlanning(); renderShifts(); toast('Turno aggiunto'); }
+    function renderTemplates(){ const box=document.getElementById('template-list'); if(!box) return; box.innerHTML=phases.map(p=>`<details class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><summary class="font-black cursor-pointer"><i class="fa-solid ${p.icon} text-sky-500 mr-2"></i>${escapeHtml(p.title)}</summary>${stockStandards[p.title]?`<div class="mt-3 space-y-2">${stockStandards[p.title].map(i=>`<div class="text-sm border-l-2 border-amber-200 pl-3">${escapeHtml(i.name)} — standard ${i.standard} ${escapeHtml(i.unit)}</div>`).join('')}</div>`:`<ul class="mt-3 space-y-2 text-sm text-slate-600">${p.items.map(i=>`<li class="border-l-2 border-sky-200 pl-3">${escapeHtml(i)}</li>`).join('')}</ul>`}</details>`).join(''); }
+    function renderLogs(){ const box=document.getElementById('log-list'); if(!box) return; const issueRows=state.issues.map(i=>`<div class="rounded-2xl ${i.stockShortage?'bg-orange-50 border-orange-100':'bg-rose-50 border-rose-100'} border p-3"><b>${escapeHtml(i.apartment)}</b><br><span>${escapeHtml(i.phase)}: ${escapeHtml(i.text)}</span><br><span class="font-bold">${(i.flags||[]).map(escapeHtml).join(', ')}</span></div>`).join(''); const logs=state.logs.map(l=>`<div class="rounded-2xl bg-slate-50 border border-slate-100 p-3"><b>${escapeHtml(l.apartment)}</b><br>${escapeHtml(l.operator)} • ${new Date(l.date).toLocaleString('it-IT')} • ${escapeHtml(l.checklistExecutionMode || 'Log')}<br>${l.warehouseMovements?`Movimenti magazzino: ${l.warehouseMovements}`:''}</div>`).join(''); box.innerHTML=logs+issueRows || '<p class="text-slate-400">Nessun log.</p>'; }
+    function renderLegionellaRegister(){ const box=document.getElementById('legionella-register-list'); if(!box) return; box.innerHTML=state.legionellaRegister.map(r=>`<div class="rounded-2xl bg-purple-50 border border-purple-100 p-3"><b>${escapeHtml(r.apartment)}</b><br>${escapeHtml(r.operator)} • ${new Date(r.date).toLocaleString('it-IT')}<br><span class="font-black text-purple-700">${escapeHtml(r.outcome || r.status || '')}</span></div>`).join('') || '<p class="text-slate-400">Nessun registro ancora.</p>'; }
+    function showView(name){ ['home','checklist','inventory','supervisor','planning','templates','legionella','logs'].forEach(v=>{ const el=document.getElementById('view-'+v); if(el) el.classList.toggle('hidden', v!==name); }); window.scrollTo({top:0, behavior:'smooth'}); }
     function openDamageReport(){ document.getElementById('damage-modal').classList.remove('hidden'); }
     function closeDamageReport(){ document.getElementById('damage-modal').classList.add('hidden'); }
-    function saveDamageReport(){ state.issues.push({apartment: currentShift?.apartment || 'Non associato', phase:'Danno rapido', text:val('damage-title'), flags:['Foto necessaria'], note:val('damage-note'), operator:state.user, date:new Date().toISOString(), status:'Aperta'}); saveState(); closeDamageReport(); renderLogs(); toast('Segnalazione salvata'); }
+    function saveDamageReport(){ state.issues.unshift({apartment:currentShift?.apartment||'Non associato', phase:'Danno rapido', text:val('damage-title'), flags:['Foto necessaria'], note:val('damage-note'), operator:state.user, date:new Date().toISOString(), status:'Aperta'}); saveState(); closeDamageReport(); renderLogs(); toast('Segnalazione salvata'); }
     function previewPhoto(e,id){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>document.getElementById(id).innerHTML=`<img src="${r.result}" class="w-full h-24 object-cover rounded-2xl">`; r.readAsDataURL(f); }
-    function formatDate(d){ if(!d) return ''; return new Date(d+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}); }
-    function val(id){ return document.getElementById(id)?.value || ''; }
-    function escapeHtml(str){ return String(str||'').replace(/[&<>'"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s])); }
-    function escapeAttr(str){ return escapeHtml(str).replace(/`/g,'&#96;'); }
 
     bootApp();
   </script>
