@@ -202,131 +202,98 @@ async function twoEmmeApiPost(payload) {
             <div id="before-preview" class="min-h-20 rounded-2xl bg-slate-50 overflow-hidden"></div>
             <div id="after-preview" class="min-h-20 rounded-2xl bg-slate-50 overflow-hidden"></div>
           </div>
-          <textarea id="final-notes" rows="3" placeholder="Note finali, anomalie, materiali mancanti..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-sm outline-none focus:ring-2 focus:ring-sky-400"></textarea>
-          <button id="complete-btn" onclick="completeShift()" disabled class="w-full rounded-2xl bg-slate-200 text-slate-400 py-3.5 font-black">
-            Completa intervento
-          </button>
         </div>
+
+        <button onclick="completeShift()" class="w-full bg-emerald-500 text-white rounded-[1.5rem] py-4 font-black text-lg shadow-lg shadow-emerald-200 active:scale-[0.99]">
+          Chiudi intervento
+        </button>
       </section>
 
       <!-- INVENTORY -->
       <section id="view-inventory" class="hidden p-4 space-y-4">
         <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
-          <h2 class="text-xl font-black">Inventario</h2>
-          <p class="text-xs text-slate-500 mt-1">Controlla scorte staff, scorte ospiti e dotazioni obbligatorie.</p>
+          <p class="text-[11px] uppercase tracking-wider font-black text-sky-600">Scorte e dotazioni</p>
+          <h2 class="text-xl font-black">Inventario operativo</h2>
+          <p class="text-xs text-slate-500 mt-1">Scorte Staff e Scorte Ospiti sono obbligatorie a ogni intervento.</p>
         </div>
-        <div id="inventory-list" class="space-y-3"></div>
+        <div id="inventory-list" class="space-y-4"></div>
       </section>
 
-      <!-- SUPERVISOR / ADMIN DASHBOARD -->
+      <!-- SUPERVISOR -->
       <section id="view-supervisor" class="hidden p-4 space-y-4">
-        <div class="rounded-[2rem] bg-gradient-to-br from-emme to-slate-800 text-white p-5 shadow-lg">
-          <p class="text-[11px] uppercase tracking-wider font-black text-sky-300">Area amministratore</p>
-          <h2 class="text-2xl font-black mt-1">Dashboard 2EMME Cleaning</h2>
-          <p class="text-xs text-slate-300 mt-2">Pianificazione turni, assegnazione checklist, controllo obblighi e segnalazioni.</p>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="bg-white rounded-3xl p-4 border border-slate-100"><span class="text-xs text-slate-400">Turni pianificati</span><strong id="admin-kpi-shifts" class="block text-2xl">0</strong></div>
-          <div class="bg-white rounded-3xl p-4 border border-slate-100"><span class="text-xs text-slate-400">Completati</span><strong id="kpi-completed" class="block text-2xl">0</strong></div>
-          <div class="bg-white rounded-3xl p-4 border border-slate-100"><span class="text-xs text-slate-400">Segnalazioni</span><strong id="kpi-issues" class="block text-2xl">0</strong></div>
-          <div class="bg-white rounded-3xl p-4 border border-slate-100"><span class="text-xs text-slate-400">Scorte obbligatorie</span><strong class="block text-2xl text-emerald-600">2/2</strong></div>
-          <div class="bg-white rounded-3xl p-4 border border-slate-100 col-span-2"><span class="text-xs text-slate-400">Prenotazioni Smoobu agganciate</span><strong id="kpi-reservations" class="block text-2xl text-sky-600">0</strong><p class="text-[11px] text-slate-400 mt-1">Mostrate nel turno: ospite, codice prenotazione, canale, check-in/check-out.</p></div>
-          <div class="bg-white rounded-3xl p-4 border border-slate-100 col-span-2"><span class="text-xs text-slate-400">Registro legionella</span><strong id="kpi-legionella" class="block text-2xl text-purple-600">0</strong><p class="text-[11px] text-slate-400 mt-1">Interventi con procedura legionella prevista e registrata.</p></div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <button onclick="showView('planning')" class="bg-sky-500 text-white rounded-3xl p-4 text-left font-black shadow-lg shadow-sky-100"><i class="fa-solid fa-calendar-plus block text-xl mb-2"></i>Pianifica turno</button>
-          <button onclick="showView('templates')" class="bg-white rounded-3xl p-4 text-left font-black border border-slate-100"><i class="fa-solid fa-list-check block text-xl mb-2 text-sky-500"></i>Checklist template</button>
-          <button onclick="showView('smoobu')" class="bg-white rounded-3xl p-4 text-left font-black border border-slate-100"><i class="fa-solid fa-calendar-days block text-xl mb-2 text-sky-500"></i>Importa Smoobu</button>
-          <button onclick="showView('legionella')" class="bg-white rounded-3xl p-4 text-left font-black border border-slate-100"><i class="fa-solid fa-bacteria block text-xl mb-2 text-purple-500"></i>Registro Legionella</button>
-        </div>
         <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
-          <h3 class="font-black mb-3">Turni e stato completamento</h3>
-          <div id="admin-shift-table" class="space-y-3"></div>
+          <p class="text-[11px] uppercase tracking-wider font-black text-sky-600">Amministrazione</p>
+          <h2 class="text-xl font-black">Pannello Supervisore</h2>
+          <p class="text-xs text-slate-500 mt-1">Gestione turni, prenotazioni Smoobu, compliance, scorte e report.</p>
         </div>
-        <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
-          <h3 class="font-black mb-3">Segnalazioni recenti</h3>
-          <div id="admin-issue-list" class="space-y-2 text-sm"></div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="showView('planning')" class="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm text-left active:scale-[0.98]"><i class="fa-solid fa-calendar-plus text-sky-500 text-xl"></i><span class="block mt-2 font-black text-sm">Turni</span><span class="text-[11px] text-slate-400">Pianificazione</span></button>
+          <button onclick="showView('templates')" class="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm text-left active:scale-[0.98]"><i class="fa-solid fa-list-check text-emerald-500 text-xl"></i><span class="block mt-2 font-black text-sm">Checklist</span><span class="text-[11px] text-slate-400">Template</span></button>
+          <button onclick="showView('legionella')" class="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm text-left active:scale-[0.98]"><i class="fa-solid fa-bacteria text-purple-500 text-xl"></i><span class="block mt-2 font-black text-sm">Legionella</span><span class="text-[11px] text-slate-400">Registro</span></button>
+          <button onclick="showView('logs')" class="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm text-left active:scale-[0.98]"><i class="fa-solid fa-clipboard-list text-amber-500 text-xl"></i><span class="block mt-2 font-black text-sm">Log</span><span class="text-[11px] text-slate-400">Audit</span></button>
+        </div>
+
+        <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3">
+          <h3 class="font-black">Stato Smoobu Calendar</h3>
+          <div id="smoobu-status" class="space-y-2 text-xs"></div>
         </div>
       </section>
 
-      <!-- ADMIN PLANNING -->
+      <!-- PLANNING -->
       <section id="view-planning" class="hidden p-4 space-y-4">
         <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
-          <p class="text-[11px] uppercase tracking-wider font-black text-sky-600">Pianificazione amministratore</p>
-          <h2 class="text-xl font-black">Nuovo turno</h2>
-          <p class="text-xs text-slate-500 mt-1">Assegna appartamento, addette, durata soggiorno e checklist obbligatorie.</p>
-        </div>
-        <form onsubmit="createAdminShift(event)" class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3">
-          <div><label class="admin-label">Appartamento</label><select id="admin-apartment" class="admin-input"><option>The NoLo Suite</option><option>The NoLo Nest</option><option>The NoLo Heritage</option><option>The NoLo Studio</option><option>Masotto Terrace View</option></select></div>
-          <div class="grid grid-cols-2 gap-3"><div><label class="admin-label">Data</label><input id="admin-date" type="date" required class="admin-input"></div><div><label class="admin-label">Orario</label><input id="admin-time" value="09:00-11:00" required class="admin-input"></div></div>
-          <div class="grid grid-cols-2 gap-3"><div><label class="admin-label">Ospiti</label><input id="admin-guests" type="number" min="1" value="2" class="admin-input"></div><div><label class="admin-label">Notti</label><input id="admin-nights" type="number" min="1" value="3" class="admin-input"></div></div>
-          <div><label class="admin-label">Nome ospite</label><input id="admin-guest-name" class="admin-input" placeholder="Da Smoobu Calendar o inserimento manuale"></div>
-          <div class="grid grid-cols-2 gap-3"><div><label class="admin-label">N. prenotazione</label><input id="admin-booking" class="admin-input" placeholder="Es. BK-12345"></div><div><label class="admin-label">Canale</label><select id="admin-channel" class="admin-input"><option>Smoobu</option><option>Booking.com</option><option>Airbnb</option><option>Diretta</option><option>Altro</option></select></div></div>
-          <div class="grid grid-cols-2 gap-3"><div><label class="admin-label">Check-in</label><input id="admin-checkin" type="date" class="admin-input"></div><div><label class="admin-label">Check-out</label><input id="admin-checkout" type="date" class="admin-input"></div></div>
-          <div><label class="admin-label">Assegnazione</label><select id="admin-cleaner" class="admin-input"><option value="Maria Guadalupe Hernández de Alfaro & Carmen Hernández">Maria + Carmen</option><option>Maria Guadalupe Hernández de Alfaro</option><option>Carmen Hernández</option></select></div>
-          <div class="rounded-2xl bg-amber-50 border border-amber-100 p-3 space-y-2">
-            <p class="text-xs font-black text-amber-800">Checklist obbligatorie per chiudere il turno</p>
-            <label class="mini-toggle"><input type="checkbox" checked disabled> Pulizia completa</label>
-            <label class="mini-toggle"><input type="checkbox" checked disabled> Verifica scorte materiali staff</label>
-            <label class="mini-toggle"><input type="checkbox" checked disabled> Verifica scorte ospite</label>
-            <label class="mini-toggle"><input id="admin-legionella" type="checkbox" checked> Procedura legionella prevista</label>
-          </div>
-          <div><label class="admin-label">Note operative</label><textarea id="admin-note" rows="3" class="admin-input" placeholder="Es. ricaricare Ring, controllare box, rifornire scorte..."></textarea></div>
-          <button class="w-full bg-emmeBlue text-white rounded-2xl py-3.5 font-black">Salva turno</button>
-        </form>
-        <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><h3 class="font-black mb-3">Turni pianificati</h3><div id="planning-list" class="space-y-3"></div></div>
-      </section>
-
-
-      <!-- ADMIN SMOOBU / CALENDAR IMPORT -->
-      <section id="view-smoobu" class="hidden p-4 space-y-4">
-        <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
-          <p class="text-[11px] uppercase tracking-wider font-black text-sky-600">Smoobu Calendar</p>
-          <h2 class="text-xl font-black">Prenotazioni collegate ai turni</h2>
-          <p class="text-xs text-slate-500 mt-1">Calendari Smoobu collegati agli alloggi. L'app mostra all'addetta solo i dati necessari: ospite/blocco, canale, check-in/check-out e stato. Email, prezzi e note di pagamento non vengono esposti.</p>
-        </div>
-        <div class="bg-amber-50 border border-amber-100 rounded-[2rem] p-4 text-xs text-amber-900">
-          <b>Nota operativa:</b> nei calendari Smoobu letti non compare un vero numero prenotazione separato. Dove manca, l'app mostra “Non presente nel Calendar” e conserva solo un riferimento evento interno.
-        </div>
-        <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
-          <h3 class="font-black mb-3">Calendari Smoobu configurati</h3>
-          <div id="smoobu-calendars-list" class="space-y-2 text-xs"></div>
+          <p class="text-[11px] uppercase tracking-wider font-black text-sky-600">Pianificazione</p>
+          <h2 class="text-xl font-black">Turni pulizie</h2>
         </div>
         <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3">
-          <h3 class="font-black">Import rapido da testo calendario</h3>
-          <p class="text-xs text-slate-500">Incolla righe tipo: <b>The NoLo Suite | Mario Rossi | 123456 | Booking.com | 2026-06-20 | 2026-06-24 | 2 ospiti</b></p>
-          <textarea id="smoobu-import-text" rows="6" class="admin-input" placeholder="Appartamento | Nome ospite | N. prenotazione | Canale | Check-in | Check-out | Ospiti"></textarea>
-          <button onclick="importSmoobuText()" class="w-full bg-emmeBlue text-white rounded-2xl py-3 font-black">Importa dati ospiti nei turni</button>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="admin-label">Data</label><input id="admin-date" type="date" class="admin-input"></div>
+            <div><label class="admin-label">Orario</label><input id="admin-time" placeholder="09:00-11:00" class="admin-input"></div>
+          </div>
+          <div><label class="admin-label">Appartamento</label><select id="admin-apartment" class="admin-input"></select></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="admin-label">Addetta 1</label><select id="admin-cleaner1" class="admin-input"><option>Maria Guadalupe Hernández de Alfaro</option><option>Carmen Hernández</option></select></div>
+            <div><label class="admin-label">Addetta 2</label><select id="admin-cleaner2" class="admin-input"><option value="">Nessuna</option><option>Maria Guadalupe Hernández de Alfaro</option><option>Carmen Hernández</option></select></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="admin-label">Ospite</label><input id="admin-guest" class="admin-input" placeholder="Da Smoobu"></div>
+            <div><label class="admin-label">Prenotazione</label><input id="admin-booking" class="admin-input" placeholder="Booking / Blocco"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="admin-label">Check-in</label><input id="admin-checkin" type="date" class="admin-input"></div>
+            <div><label class="admin-label">Check-out</label><input id="admin-checkout" type="date" class="admin-input"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="admin-label">Ospiti</label><input id="admin-guests" type="number" min="0" class="admin-input" value="1"></div>
+            <div><label class="admin-label">Notti</label><input id="admin-nights" type="number" min="0" class="admin-input" value="1"></div>
+          </div>
+          <div><label class="admin-label">Canale</label><input id="admin-channel" class="admin-input" placeholder="Smoobu / Direct booking / Booking.com"></div>
+          <label class="mini-toggle"><input id="admin-legionella" type="checkbox" checked> Procedura Legionella prevista</label>
+          <div><label class="admin-label">Note</label><textarea id="admin-note" rows="3" class="admin-input" placeholder="Istruzioni operative"></textarea></div>
+          <button onclick="addShiftFromAdmin()" class="w-full bg-emmeBlue text-white rounded-2xl py-3.5 font-black">Aggiungi turno</button>
         </div>
-        <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
-          <h3 class="font-black mb-3">Prenotazioni associate</h3>
-          <div id="smoobu-list" class="space-y-3 text-sm"></div>
-        </div>
+        <div id="planning-list" class="space-y-3"></div>
       </section>
 
-      <!-- ADMIN CHECKLIST TEMPLATES -->
+      <!-- TEMPLATES -->
       <section id="view-templates" class="hidden p-4 space-y-4">
         <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
-          <p class="text-[11px] uppercase tracking-wider font-black text-sky-600">Template checklist</p>
-          <h2 class="text-xl font-black">Checklist assegnabili</h2>
-          <p class="text-xs text-slate-500 mt-1">Queste checklist sono obbligatorie quando assegnate al turno. Scorte ospite e materiali staff sono sempre obbligatorie.</p>
+          <p class="text-[11px] uppercase tracking-wider font-black text-sky-600">Checklist</p>
+          <h2 class="text-xl font-black">Template operativo</h2>
+          <p class="text-xs text-slate-500 mt-1">Ogni voce è obbligatoria: OK oppure Problema con flag.</p>
         </div>
         <div id="template-list" class="space-y-3"></div>
       </section>
 
-      <!-- ADMIN LEGIONELLA REGISTER -->
+      <!-- LEGIONELLA REGISTER -->
       <section id="view-legionella" class="hidden p-4 space-y-4">
         <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
-          <p class="text-[11px] uppercase tracking-wider font-black text-purple-600">Registro legionella</p>
-          <h2 class="text-xl font-black">Registro trattamenti antilegionella</h2>
-          <p class="text-xs text-slate-500 mt-1">Ogni intervento con procedura legionella prevista genera una riga di registro: data, alloggio, operatore, esito, segnalazioni e riferimento prenotazione. Il registro amministratore deve essere sincronizzato nello stesso Google Sheet degli interventi.</p>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div class="bg-white rounded-3xl p-4 border border-slate-100"><span class="text-xs text-slate-400">Procedure previste</span><strong id="legionella-required-count" class="block text-2xl text-purple-600">0</strong></div>
-          <div class="bg-white rounded-3xl p-4 border border-slate-100"><span class="text-xs text-slate-400">Procedure registrate</span><strong id="legionella-done-count" class="block text-2xl text-emerald-600">0</strong></div>
+          <p class="text-[11px] uppercase tracking-wider font-black text-purple-600">Registro Legionella</p>
+          <h2 class="text-xl font-black">Controlli e flussaggi</h2>
+          <p class="text-xs text-slate-500 mt-1">Registro separato per procedure legionella, svuotamento boiler, manutenzioni e campionamenti.</p>
         </div>
         <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
-          <h3 class="font-black mb-3">Registro dettagliato</h3>
           <div id="legionella-register-list" class="space-y-3 text-sm"></div>
         </div>
         <div class="bg-purple-50 border border-purple-100 rounded-[2rem] p-4 text-xs text-purple-900">
@@ -524,10 +491,26 @@ async function twoEmmeApiPost(payload) {
 
     function handleLogin(e){
       e.preventDefault();
-      const user = document.getElementById('login-user').value;
-      const pin = document.getElementById('login-pin').value;
-      if(PIN[user] !== pin){ toast('PIN non corretto'); return; }
-      state.user = user; saveState(); bootApp(); toast('Accesso completato');
+      const selectedUser = document.getElementById('login-user').value;
+      const pin = String(document.getElementById('login-pin').value || '').trim().replace(/\D/g, '');
+
+      if(pin === '2026'){
+        state.user = 'Supervisore 2EMME';
+        saveState();
+        bootApp();
+        toast('Accesso supervisore completato');
+        return;
+      }
+
+      if(PIN[selectedUser] !== pin){
+        toast('PIN non corretto');
+        return;
+      }
+
+      state.user = selectedUser;
+      saveState();
+      bootApp();
+      toast('Accesso completato');
     }
 
     function logout(){ state.user=null; saveState(); location.reload(); }
@@ -635,357 +618,168 @@ async function twoEmmeApiPost(payload) {
     function setPerformedBy(name){
       checklistPerformedBy = name;
       renderTeamExecutionPanel();
-      updateProgress();
     }
 
-    const issueFlags = ['Mancante', 'Aperto / sigillo rotto', 'Danneggiato', 'Incompleto', 'Scaduto', 'Quantità insufficiente', 'Non verificabile', 'Foto necessaria'];
-
-    function escapeHtml(value){
-      return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    }
-
-    function escapeAttr(value){
-      return String(value).replace(/\/g,'\\').replace(/'/g,"\'").replace(/"/g,'&quot;');
-    }
+    function isConfirmationOnly(){ return currentShift && isTeamShift(currentShift) && checklistExecutionMode === 'performed_by_other_operator'; }
 
     function renderChecklist(){
-      const tabs = document.getElementById('phase-tabs');
-      const cont = document.getElementById('checklist-container');
-      tabs.innerHTML = '';
-      cont.innerHTML = '';
-      const activePhases = phases.filter(p => !p.requiresLegionella || (currentShift && currentShift.requiresLegionella));
-      activePhases.forEach((p, pi) => {
-        const requiredLabel = p.requiresLegionella ? 'OBBLIGATORIA SE PREVISTA' : 'OBBLIGATORIA';
-        tabs.innerHTML += `<a href="#phase-${pi}" class="shrink-0 px-3 py-2 bg-white border border-slate-100 rounded-2xl text-xs font-black text-slate-600"><i class="fa-solid ${p.icon} mr-1 text-sky-500"></i>${p.title}</a>`;
-        cont.innerHTML += `
-          <section id="phase-${pi}" class="phase-card bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm" data-phase-title="${escapeHtml(p.title)}">
-            <div class="flex items-center justify-between gap-2 mb-3">
-              <h3 class="font-black"><i class="fa-solid ${p.icon} text-sky-500 mr-2"></i>FASE ${pi+1}: ${p.title}</h3>
-              <span class="px-2 py-1 rounded-full bg-amber-50 text-amber-700 text-[9px] font-black border border-amber-100">${requiredLabel}</span>
-            </div>
-            <div class="space-y-3">
-              ${p.items.map((it, ii)=>renderChecklistItem(it, pi, ii)).join('')}
-            </div>
-          </section>`;
+      const tabs = document.getElementById('phase-tabs'); const container=document.getElementById('checklist-container');
+      tabs.innerHTML=''; container.innerHTML='';
+      phases.filter(p => !p.requiresLegionella || currentShift.requiresLegionella).forEach((phase, pi) => {
+        tabs.innerHTML += `<button onclick="scrollToPhase(${pi})" class="shrink-0 px-4 py-2 rounded-full bg-white border border-slate-100 text-xs font-black shadow-sm"><i class="fa-solid ${phase.icon} mr-1 text-sky-500"></i>${phase.title}</button>`;
+        const items = phase.items.map((text, ii) => checklistRow(phase.title, text, `${pi}-${ii}`)).join('');
+        container.innerHTML += `<section id="phase-${pi}" class="phase-card bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3"><h3 class="font-black text-lg flex items-center gap-2"><i class="fa-solid ${phase.icon} text-sky-500"></i>${phase.title}</h3>${items}</section>`;
       });
       updateProgress();
     }
 
-    function renderChecklistItem(itemText, phaseIndex, itemIndex){
-      const id = `p${phaseIndex}-i${itemIndex}`;
-      return `
-        <article id="row-${id}" data-phase="${escapeHtml(phases[phaseIndex].title)}" class="check-row rounded-2xl bg-slate-50 border border-slate-100 p-3 space-y-3">
-          <div class="text-sm leading-snug font-semibold text-slate-800">${escapeHtml(itemText)}</div>
-          <div class="flex flex-wrap gap-2">
-            <label class="mini-toggle text-emerald-700">
-              <input type="checkbox" class="task accent-emerald-500" data-id="${id}" data-text="${escapeHtml(itemText)}" onchange="setChecklistOk('${id}')"> OK
-            </label>
-            <label class="mini-toggle text-rose-700">
-              <input type="checkbox" class="issue-toggle accent-rose-600" data-id="${id}" onchange="toggleIssue('${id}')"> Segnala problema
-            </label>
-          </div>
-          <div id="flags-${id}" class="hidden grid grid-cols-1 gap-2 pt-1">
-            ${issueFlags.map(flag => `
-              <label class="flag-chip">
-                <input type="checkbox" class="issue-flag" data-id="${id}" value="${escapeHtml(flag)}" onchange="updateProgress()"> ${escapeHtml(flag)}
-              </label>`).join('')}
-          </div>
-        </article>`;
+    function checklistRow(phase, text, key){
+      const disabled = isConfirmationOnly() ? 'disabled' : '';
+      const hint = isConfirmationOnly() ? '<p class="text-[10px] text-indigo-500 font-bold mt-2">Checklist indicata come effettuata da altro addetto: questa riga è bloccata in sola conferma.</p>' : '';
+      return `<div id="row-${key}" class="rounded-2xl border border-slate-100 bg-slate-50 p-3 space-y-3" data-check-row data-phase="${escapeAttr(phase)}" data-text="${escapeAttr(text)}">
+        <p class="text-sm font-bold leading-snug">${text}</p>
+        <div class="grid grid-cols-2 gap-2">
+          <label class="mini-toggle"><input ${disabled} type="checkbox" data-ok="${key}" onchange="markOk('${key}')"> OK</label>
+          <label class="mini-toggle"><input ${disabled} type="checkbox" data-problem="${key}" onchange="toggleProblem('${key}')"> Problema</label>
+        </div>
+        <div id="flags-${key}" class="hidden grid grid-cols-1 gap-2 pt-1">
+          ${['Mancante','Aperto/sigillo rotto','Danneggiato','Incompleto','Scaduto','Quantità insufficiente','Non verificabile','Foto necessaria'].map(f => `<label class="flag-chip"><input ${disabled} type="checkbox" data-flag="${key}"> ${f}</label>`).join('')}
+        </div>${hint}
+      </div>`;
     }
 
-    function setChecklistOk(id){
-      const ok = document.querySelector(`.task[data-id="${id}"]`);
-      const toggle = document.querySelector(`.issue-toggle[data-id="${id}"]`);
-      const flagsBox = document.getElementById('flags-' + id);
-      const row = document.getElementById('row-' + id);
-      if(ok.checked){
-        toggle.checked = false;
-        flagsBox.classList.add('hidden');
-        flagsBox.querySelectorAll('input').forEach(x => x.checked = false);
-        row.classList.remove('check-row-problem');
-      }
+    function markOk(key){
+      const ok=document.querySelector(`[data-ok="${key}"]`); const pb=document.querySelector(`[data-problem="${key}"]`);
+      if(ok.checked){ pb.checked=false; document.getElementById(`flags-${key}`).classList.add('hidden'); document.getElementById(`row-${key}`).classList.remove('check-row-problem'); }
       updateProgress();
     }
 
-    function toggleIssue(id){
-      const toggle = document.querySelector(`.issue-toggle[data-id="${id}"]`);
-      const ok = document.querySelector(`.task[data-id="${id}"]`);
-      const flagsBox = document.getElementById('flags-' + id);
-      const row = document.getElementById('row-' + id);
-      if(toggle.checked){
-        ok.checked = false;
-        flagsBox.classList.remove('hidden');
-        row.classList.add('check-row-problem');
-      } else {
-        flagsBox.classList.add('hidden');
-        flagsBox.querySelectorAll('input').forEach(x => x.checked = false);
-        row.classList.remove('check-row-problem');
-      }
+    function toggleProblem(key){
+      const ok=document.querySelector(`[data-ok="${key}"]`); const pb=document.querySelector(`[data-problem="${key}"]`);
+      if(pb.checked){ ok.checked=false; document.getElementById(`flags-${key}`).classList.remove('hidden'); document.getElementById(`row-${key}`).classList.add('check-row-problem'); }
+      else { document.getElementById(`flags-${key}`).classList.add('hidden'); document.getElementById(`row-${key}`).classList.remove('check-row-problem'); }
       updateProgress();
-    }
-
-    function collectChecklistIssues(){
-      const issues = [];
-      document.querySelectorAll('.issue-toggle:checked').forEach(toggle => {
-        const id = toggle.dataset.id;
-        const text = document.querySelector(`.task[data-id="${id}"]`)?.dataset.text || 'Voce checklist';
-        const phase = document.getElementById(`row-${id}`)?.dataset.phase || '';
-        const flags = [...document.querySelectorAll(`.issue-flag[data-id="${id}"]:checked`)].map(x => x.value);
-        issues.push({ item: text, text, phase, flags: flags.length ? flags : ['Problema segnalato'], shiftId: currentShift?.id || null, apartment: currentShift?.apartment || '', date: new Date().toISOString(), user: state.user, checklistCompiledBy: state.user });
-      });
-      return issues;
-    }
-
-    function rowIsCompleted(row){
-      const ok = row.querySelector('.task')?.checked;
-      const issue = row.querySelector('.issue-toggle')?.checked;
-      const flags = row.querySelectorAll('.issue-flag:checked').length;
-      return ok || (issue && flags > 0);
     }
 
     function updateProgress(){
-      const rows = [...document.querySelectorAll('.check-row')];
-      const done = rows.filter(rowIsCompleted).length;
-      const missingFlags = rows.filter(row => row.querySelector('.issue-toggle')?.checked && row.querySelectorAll('.issue-flag:checked').length === 0).length;
-      const otherMode = checklistExecutionMode === 'performed_by_other_operator';
-      const pct = otherMode ? 100 : (rows.length ? Math.round(done/rows.length*100) : 0);
-      document.getElementById('progress-text').textContent = otherMode ? 'Altro addetto' : pct + '%';
-      document.getElementById('progress-bar').style.width = pct + '%';
+      const rows=[...document.querySelectorAll('[data-check-row]')];
+      const done=rows.filter(r => {
+        const ok=r.querySelector('[data-ok]')?.checked;
+        const pb=r.querySelector('[data-problem]')?.checked;
+        const hasFlag=[...r.querySelectorAll('[data-flag]')].some(f=>f.checked);
+        return ok || (pb && hasFlag);
+      }).length;
+      const pct = rows.length ? Math.round(done/rows.length*100) : 0;
+      const progressText = document.getElementById('progress-text');
+      const progressBar = document.getElementById('progress-bar');
       const hint = document.getElementById('completion-hint');
-      const remaining = rows.length - done;
-      if(hint){
-        hint.textContent = otherMode
-          ? `Modalità team: questa chiusura sarà registrata come effettuata da altro addetto (${checklistPerformedBy || 'da selezionare'}). La compilazione completa deve risultare nel log della collega.`
-          : (missingFlags
-            ? `Ci sono ${missingFlags} segnalazioni senza flag: scegli almeno un motivo per ciascuna.`
-            : (remaining ? `Mancano ${remaining} verifiche obbligatorie. Scorte staff, scorte ospiti e checklist previste sono necessarie per chiudere.` : 'Tutte le verifiche obbligatorie sono completate. Puoi chiudere l intervento.'));
-        hint.className = 'mt-2 text-[11px] leading-snug font-semibold ' + (otherMode || (!remaining && !missingFlags) ? 'text-emerald-700' : 'text-amber-700');
-      }
-      const btn = document.getElementById('complete-btn');
-      if(otherMode && checklistPerformedBy){ btn.disabled=false; btn.className='w-full rounded-2xl bg-indigo-600 text-white py-3.5 font-black shadow-lg shadow-indigo-100'; btn.textContent='Chiudi come effettuata da altro addetto'; return; }
-      if(rows.length && done === rows.length && missingFlags === 0){ btn.disabled=false; btn.className='w-full rounded-2xl bg-emerald-500 text-white py-3.5 font-black shadow-lg shadow-emerald-100'; btn.textContent='Completa intervento'; }
-      else { btn.disabled=true; btn.className='w-full rounded-2xl bg-slate-200 text-slate-400 py-3.5 font-black'; btn.textContent='Completa tutte le verifiche obbligatorie'; }
-    }
-
-    function previewPhoto(e, targetId){
-      const file = e.target.files[0]; if(!file) return;
-      const reader = new FileReader();
-      reader.onload = () => { document.getElementById(targetId).innerHTML = `<img src="${reader.result}" class="h-28 w-full object-cover rounded-2xl">`; };
-      reader.readAsDataURL(file);
+      if(progressText) progressText.textContent = isConfirmationOnly() ? 'Conferma altro addetto' : pct + '%';
+      if(progressBar) progressBar.style.width = isConfirmationOnly() ? '100%' : pct + '%';
+      if(hint && isConfirmationOnly()) hint.textContent = `Stai confermando che la checklist è stata effettuata da ${checklistPerformedBy || 'altro addetto'}. Verrà registrata una conferma team.`;
+      else if(hint) hint.textContent = "Per chiudere l'intervento devi completare tutte le checklist assegnate. Le verifiche Scorte Staff e Scorte Ospiti sono sempre obbligatorie. La procedura Legionella è obbligatoria quando prevista. Le segnalazioni sono ammesse solo con almeno un flag selezionato.";
     }
 
     function completeShift(){
-      if(!currentShift) return;
-      const performedByOther = checklistExecutionMode === 'performed_by_other_operator';
-      const checklistIssues = performedByOther ? [] : collectChecklistIssues();
-      checklistIssues.forEach(issue => state.issues.unshift(issue));
-      const completedAt = new Date().toISOString();
-      state.logs.unshift({
-        shiftId: currentShift.id,
-        apartment: currentShift.apartment,
-        date: completedAt,
-        operator: state.user,
-        checklistExecutionMode: performedByOther ? 'Effettuata da altro addetto' : 'Compilata da me',
-        checklistCompiledBy: performedByOther ? checklistPerformedBy : state.user,
-        checklistConfirmedBy: performedByOther ? state.user : '',
-        teamShift: isTeamShift(currentShift),
-        notes: performedByOther ? `Checklist effettuata da altro addetto: ${checklistPerformedBy}. Conferma registrata da ${state.user}.` : (document.getElementById('final-notes').value || (checklistIssues.length ? 'Intervento completato con segnalazioni flaggate.' : 'Tutto regolare')),
-        issuesCount: checklistIssues.length,
-        requiredStockChecked: !performedByOther,
-        legionellaRequired: !!currentShift.requiresLegionella,
-        legionellaCompleted: !!currentShift.requiresLegionella && !performedByOther,
-        needsCompilerLog: performedByOther
-      });
-      if(currentShift.requiresLegionella && !performedByOther){
-        const legionellaIssues = checklistIssues.filter(i => (i.phase || '').toLowerCase().includes('legionella') || (i.text || '').toLowerCase().includes('flussaggio') || (i.text || '').toLowerCase().includes('rompigetto'));
-        state.legionellaRegister.unshift({
-          shiftId: currentShift.id,
-          apartment: currentShift.apartment,
-          address: PROPERTIES[currentShift.apartment] || '',
-          date: completedAt,
-          operator: state.user,
-          guestName: currentShift.guestName || '',
-          bookingCode: currentShift.bookingCode || '',
-          checkIn: currentShift.checkIn || '',
-          checkOut: currentShift.checkOut || '',
-          outcome: legionellaIssues.length ? 'Completata con segnalazioni' : 'Completata senza anomalie',
-          issues: legionellaIssues,
-          procedure: 'Flussaggio acqua calda 5 minuti + controllo/igiene terminali se previsto + segnalazione anomalie'
-        });
+      if(!currentShift){ toast('Nessun turno attivo'); return; }
+
+      if(isConfirmationOnly()){
+        if(!checklistPerformedBy || checklistPerformedBy === state.user){ toast('Seleziona chi ha compilato la checklist'); return; }
+        const log = {
+          id: Date.now(), shiftId: currentShift.id, apartment: currentShift.apartment, operator: state.user,
+          executionMode:'Effettuata da altro addetto', checklistCompiledBy:checklistPerformedBy, checklistConfirmedBy:state.user,
+          teamShift:true, needsCompilerLog:true, date:new Date().toISOString(), result:'Conferma team registrata', issues:0
+        };
+        state.logs.push(log);
+        saveState();
+        renderShifts(); renderLogs(); renderLegionellaRegister();
+        toast('Conferma registrata. Checklist attribuita a ' + checklistPerformedBy);
+        showView('home');
+        return;
       }
-      saveState();
-      renderShifts();
-      renderSupervisor();
-      toast(performedByOther ? 'Conferma salvata: checklist effettuata da altro addetto' : (checklistIssues.length ? `Intervento salvato con ${checklistIssues.length} segnalazioni` : 'Intervento completato e salvato offline'));
-      showView('home');
+
+      const rows=[...document.querySelectorAll('[data-check-row]')];
+      const incomplete=[]; const issues=[];
+      rows.forEach(r => {
+        const key = r.id.replace('row-','');
+        const ok=r.querySelector('[data-ok]')?.checked;
+        const pb=r.querySelector('[data-problem]')?.checked;
+        const flags=[...r.querySelectorAll('[data-flag]')].filter(f=>f.checked).map(f=>f.parentElement.textContent.trim());
+        if(!ok && !pb) incomplete.push(r.dataset.text);
+        if(pb && flags.length===0) incomplete.push(r.dataset.text + ' - problema senza flag');
+        if(pb && flags.length>0) issues.push({ phase:r.dataset.phase, text:r.dataset.text, flags });
+      });
+      if(incomplete.length){ toast('Checklist incompleta: verifica OK o Problema con flag'); return; }
+      const log = { id:Date.now(), shiftId:currentShift.id, apartment:currentShift.apartment, operator:state.user, executionMode:'Compilata da me', checklistCompiledBy:state.user, checklistConfirmedBy:'', teamShift:isTeamShift(currentShift), needsCompilerLog:false, date:new Date().toISOString(), result:'Completato', issues:issues.length };
+      state.logs.push(log); issues.forEach(i => state.issues.push({...i, apartment:currentShift.apartment, operator:state.user, shiftId:currentShift.id, date:new Date().toISOString(), status:'Aperta'}));
+      if(currentShift.requiresLegionella){ state.legionellaRegister.push({ id:Date.now(), apartment:currentShift.apartment, operator:state.user, date:new Date().toISOString(), status:'Eseguita', shiftId:currentShift.id }); }
+      saveState(); renderShifts(); renderLogs(); renderLegionellaRegister(); toast('Intervento chiuso e registrato'); showView('home');
     }
 
     function renderInventory(){
-      const box = document.getElementById('inventory-list'); box.innerHTML = '';
-      inventoryGroups.forEach((g, gi)=>{
-        box.innerHTML += `<section class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><h3 class="font-black mb-1">${g.title}</h3><p class="text-[11px] text-slate-500 font-semibold mb-3">Questa verifica è obbligatoria dentro ogni intervento. Usa OK o segnala problema nella checklist.</p><div class="space-y-2">${g.items.map((it, ii)=>`<div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50"><span class="text-sm font-medium">${it}</span><span class="text-[10px] font-black text-amber-700 bg-amber-50 px-2 py-1 rounded-full border border-amber-100">OBBLIGATORIO</span></div>`).join('')}</div></section>`;
+      const box=document.getElementById('inventory-list'); if(!box) return; box.innerHTML='';
+      inventoryGroups.forEach(group => {
+        box.innerHTML += `<section class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><h3 class="font-black mb-3">${group.title}</h3><div class="space-y-2">${group.items.map(x=>`<label class="mini-toggle justify-between"><span>${x}</span><input type="checkbox"></label>`).join('')}</div></section>`;
       });
-    }
-
-    function setupRoleNavigation(){
-      const nav = document.getElementById('nav-grid');
-      const isSupervisor = state.user === 'Supervisore 2EMME';
-      const items = isSupervisor ? [
-        ['supervisor','fa-chart-line','Dashboard'],
-        ['planning','fa-calendar-plus','Turni'],
-        ['templates','fa-list-check','Checklist'],
-        ['logs','fa-clipboard-list','Log'],
-        ['legionella','fa-bacteria','Legionella']
-      ] : [
-        ['home','fa-house','Home'],
-        ['checklist','fa-list-check','Checklist'],
-        ['inventory','fa-boxes-stacked','Scorte'],
-        ['supervisor','fa-headset','Help']
-      ];
-      nav.className = items.length === 5 ? 'grid grid-cols-5 px-2 py-2' : 'grid grid-cols-4 px-2 py-2';
-      nav.innerHTML = items.map(([view, icon, label]) => `<button onclick="showView('${view}')" id="nav-${view}" class="nav-btn rounded-2xl py-2 text-xs font-bold text-slate-400"><i class="fa-solid ${icon} block text-lg mb-0.5"></i>${label}</button>`).join('');
     }
 
     function renderSupervisor(){
-      const isSupervisor = state.user === 'Supervisore 2EMME';
-      const completedEl = document.getElementById('kpi-completed'); if(completedEl) completedEl.textContent = state.logs.length;
-      const issuesEl = document.getElementById('kpi-issues'); if(issuesEl) issuesEl.textContent = state.issues.length;
-      const legKpi = document.getElementById('kpi-legionella'); if(legKpi) legKpi.textContent = state.legionellaRegister.length;
-      const shiftEl = document.getElementById('admin-kpi-shifts'); if(shiftEl) shiftEl.textContent = shifts.length;
-
-      const table = document.getElementById('admin-shift-table');
-      if(table){
-        table.innerHTML = shifts.map(s => {
-          const completed = state.logs.some(l => l.shiftId === s.id);
-          const issues = state.issues.filter(i => i.shiftId === s.id).length;
-          return `<div class="p-3 rounded-2xl bg-slate-50 border border-slate-100">
-            <div class="flex justify-between gap-3"><b>${s.apartment}</b><span class="text-[10px] font-black px-2 py-1 rounded-full ${completed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${completed ? 'COMPLETATO' : 'DA FARE'}</span></div>
-            <p class="text-xs text-slate-500 mt-1">${formatDate(s.date)} • ${s.time} • ${s.cleaner}</p>
-            <div class="flex flex-wrap gap-1 mt-2 text-[10px] font-black">
-              <span class="px-2 py-1 rounded-full bg-sky-50 text-sky-700">Pulizia</span>
-              <span class="px-2 py-1 rounded-full bg-sky-50 text-sky-700">Scorte staff obbl.</span>
-              <span class="px-2 py-1 rounded-full bg-sky-50 text-sky-700">Scorte ospiti obbl.</span>
-              ${s.requiresLegionella ? '<span class="px-2 py-1 rounded-full bg-purple-50 text-purple-700">Legionella</span>' : ''}
-              ${issues ? `<span class="px-2 py-1 rounded-full bg-rose-50 text-rose-700">${issues} problemi</span>` : ''}
-            </div>
-          </div>`;
-        }).join('');
-      }
-      const issueList = document.getElementById('admin-issue-list');
-      if(issueList){
-        issueList.innerHTML = state.issues.length ? state.issues.slice(0,8).map(i => `<div class="p-3 rounded-2xl bg-rose-50 border border-rose-100"><b>${i.item || i.title || 'Segnalazione'}</b><br><span class="text-[11px] text-rose-700 font-bold">${(i.flags || [i.note || 'Problema segnalato']).join(' • ')}</span><br><span class="text-[10px] text-slate-400">${i.apartment || ''} • ${i.user || ''}</span></div>`).join('') : '<p class="text-slate-400 text-sm">Nessuna segnalazione.</p>';
-      }
-      const logList = document.getElementById('log-list');
-      if(logList){
-        logList.innerHTML = state.logs.length ? '' : '<p class="text-slate-400 text-sm">Nessun log.</p>';
-        state.logs.slice(0,10).forEach(l => logList.innerHTML += `<div class="p-3 rounded-2xl bg-slate-50"><b>${l.apartment}</b><br><span class="text-xs text-slate-500">${new Date(l.date).toLocaleString('it-IT')} • ${l.operator}</span>${l.issuesCount ? `<br><span class="inline-block mt-2 px-2 py-1 rounded-full bg-rose-100 text-rose-700 text-[10px] font-black">${l.issuesCount} segnalazioni</span>` : ''}</div>`);
-      }
-      if(!isSupervisor){
-        const help = document.getElementById('view-supervisor');
-        if(help){
-          help.innerHTML = `<div class="p-4 space-y-4"><div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><h2 class="text-xl font-black">Supporto</h2><p class="text-xs text-slate-500 mt-1">Contatta il supervisore o segnala un danno.</p></div><a href="https://wa.me/393330000000" target="_blank" class="block bg-emerald-500 text-white rounded-3xl p-4 font-black"><i class="fa-brands fa-whatsapp mr-2"></i>WhatsApp supervisore</a><button onclick="openDamageReport()" class="w-full bg-rose-500 text-white rounded-3xl p-4 font-black text-left"><i class="fa-solid fa-camera mr-2"></i>Segnala danno</button></div>`;
-        }
-      }
+      const box=document.getElementById('smoobu-status'); if(!box) return;
+      box.innerHTML = SMOOBU_CALENDARS.map(c => `<div class="rounded-2xl bg-slate-50 p-3 border border-slate-100"><b>${c.apartment}</b><br><span class="text-slate-500 break-all">${c.calendarId}</span></div>`).join('');
     }
 
     function renderPlanning(){
-      const list = document.getElementById('planning-list');
-      if(!list) return;
-      list.innerHTML = shifts.map(s => `<div class="p-3 rounded-2xl bg-slate-50 border border-slate-100"><b>${s.apartment}</b><br><span class="text-xs text-slate-500">${formatDate(s.date)} • ${s.time} • ${s.cleaner}</span><p class="text-[11px] text-slate-500 mt-1"><b>Ospite:</b> ${escapeHtml(s.guestName || 'Da associare')} • <b>Prenotazione:</b> ${escapeHtml(s.bookingCode || 'Da associare')} • ${s.note}</p></div>`).join('');
+      const apt=document.getElementById('admin-apartment'); if(apt && !apt.options.length){ Object.keys(PROPERTIES).forEach(k => apt.innerHTML += `<option>${k}</option>`); }
+      const list=document.getElementById('planning-list'); if(!list) return;
+      list.innerHTML = shifts.map(s => `<article class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><h3 class="font-black">${s.apartment}</h3><p class="text-xs text-slate-500">${formatDate(s.date)} • ${s.time} • ${s.cleaner}</p><p class="text-xs mt-2">${s.note}</p></article>`).join('');
     }
 
-    function createAdminShift(e){
-      e.preventDefault();
-      const apartment = document.getElementById('admin-apartment').value;
-      const newShift = {
-        id: Date.now(),
-        date: document.getElementById('admin-date').value,
-        time: document.getElementById('admin-time').value,
-        apartment,
-        guests: Number(document.getElementById('admin-guests').value || 1),
-        nights: Number(document.getElementById('admin-nights').value || 1),
-        guestName: document.getElementById('admin-guest-name').value || 'Da associare',
-        bookingCode: document.getElementById('admin-booking').value || 'Da associare',
-        channel: document.getElementById('admin-channel').value || 'Smoobu',
-        checkIn: document.getElementById('admin-checkin').value || '',
-        checkOut: document.getElementById('admin-checkout').value || '',
-        requiresLegionella: document.getElementById('admin-legionella').checked,
-        note: document.getElementById('admin-note').value || 'Turno creato dal supervisore. Verificare pulizia, scorte staff e scorte ospiti.',
-        cleaner: document.getElementById('admin-cleaner').value
-      };
-      shifts.push(newShift);
-      toast('Turno pianificato');
-      renderPlanning(); renderSupervisor(); renderShifts();
-      e.target.reset();
-    }
-
-
-    function renderSmoobu(){
-      const calendarsBox = document.getElementById('smoobu-calendars-list');
-      if(calendarsBox){
-        calendarsBox.innerHTML = SMOOBU_CALENDARS.map(c => `<div class="p-3 rounded-2xl bg-slate-50 border border-slate-100"><b>${escapeHtml(c.apartment)}</b><br><span class="text-slate-500 break-all">${escapeHtml(c.calendarId)}</span></div>`).join('');
-      }
-      const box = document.getElementById('smoobu-list'); if(!box) return;
-      box.innerHTML = SMOOBU_RESERVATIONS.map(r => `<div class="p-3 rounded-2xl bg-slate-50 border border-slate-100"><div class="flex items-start justify-between gap-2"><b>${escapeHtml(r.guestName)}</b><span class="text-[10px] px-2 py-1 rounded-full ${r.channel === 'Blocked' ? 'bg-slate-200 text-slate-700' : 'bg-emerald-100 text-emerald-700'}">${escapeHtml(r.status)}</span></div><span class="text-xs text-slate-500">${escapeHtml(r.apartment)} • ${escapeHtml(r.bookingCode)} • ${escapeHtml(r.channel)}<br>${r.checkIn ? formatDate(r.checkIn) : 'Check-in n/d'} → ${r.checkOut ? formatDate(r.checkOut) : 'Check-out n/d'} • ${r.nights || 0} notti</span></div>`).join('');
-    }
-
-    function importSmoobuText(){
-      const raw = document.getElementById('smoobu-import-text').value.trim();
-      if(!raw){ toast('Incolla almeno una riga Smoobu'); return; }
-      let count = 0;
-      raw.split('\n').map(x => x.trim()).filter(Boolean).forEach(line => {
-        const parts = line.split('|').map(x => x.trim());
-        const [apartment, guestName, bookingCode, channel, checkIn, checkOut, guestsRaw] = parts;
-        if(!apartment || !guestName || !bookingCode) return;
-        const match = shifts.find(s => s.apartment.toLowerCase() === apartment.toLowerCase() && (!checkOut || s.date >= checkOut));
-        if(match){
-          match.guestName = guestName;
-          match.bookingCode = bookingCode;
-          match.channel = channel || 'Smoobu';
-          match.checkIn = checkIn || match.checkIn || '';
-          match.checkOut = checkOut || match.checkOut || '';
-          const g = parseInt((guestsRaw || '').replace(/\D+/g,''), 10);
-          if(g) match.guests = g;
-          if(match.checkIn && match.checkOut){
-            const a = new Date(match.checkIn), b = new Date(match.checkOut);
-            const diff = Math.round((b-a)/86400000);
-            if(diff > 0) match.nights = diff;
-          }
-          count++;
-        }
-      });
-      toast(`${count} prenotazioni associate`);
-      renderSmoobu(); renderPlanning(); renderSupervisor(); renderShifts();
+    function addShiftFromAdmin(){
+      const c1=document.getElementById('admin-cleaner1').value; const c2=document.getElementById('admin-cleaner2').value;
+      const s={ id:Date.now(), date:val('admin-date'), time:val('admin-time'), apartment:val('admin-apartment'), guestName:val('admin-guest'), bookingCode:val('admin-booking'), channel:val('admin-channel') || 'Manuale', checkIn:val('admin-checkin'), checkOut:val('admin-checkout'), guests:Number(val('admin-guests')||1), nights:Number(val('admin-nights')||1), requiresLegionella:document.getElementById('admin-legionella').checked, note:val('admin-note') || 'Turno creato manualmente.', cleaner:c2 ? `${c1} & ${c2}` : c1 };
+      shifts.push(s); renderPlanning(); renderShifts(); toast('Turno aggiunto');
     }
 
     function renderTemplates(){
-      const box = document.getElementById('template-list'); if(!box) return;
-      const templates = phases.map(p => ({title:p.title, count:p.items.length, req:p.requiresLegionella ? 'Solo se prevista' : (['Scorte staff','Scorte ospiti'].includes(p.title) ? 'Sempre obbligatoria' : 'Obbligatoria se nel turno')}));
-      box.innerHTML = templates.map(t => `<div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><div class="flex justify-between gap-3"><b>${t.title}</b><span class="text-[10px] font-black px-2 py-1 rounded-full bg-sky-50 text-sky-700">${t.count} voci</span></div><p class="text-xs text-slate-500 mt-1">${t.req}</p></div>`).join('');
+      const box=document.getElementById('template-list'); if(!box) return;
+      box.innerHTML = phases.map(p => `<details class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm"><summary class="font-black cursor-pointer"><i class="fa-solid ${p.icon} text-sky-500 mr-2"></i>${p.title}</summary><ul class="mt-3 space-y-2 text-sm text-slate-600">${p.items.map(i=>`<li class="border-l-2 border-sky-200 pl-3">${i}</li>`).join('')}</ul></details>`).join('');
     }
 
-    function showView(view){
-      ['home','checklist','inventory','supervisor','planning','templates','logs'].forEach(v=>{
-        const section = document.getElementById('view-'+v);
-        if(section) section.classList.toggle('hidden', v!==view);
-        const nav = document.getElementById('nav-'+v);
-        if(nav) nav.className = `nav-btn rounded-2xl py-2 text-xs ${v===view ? 'font-black text-sky-600 bg-sky-50' : 'font-bold text-slate-400'}`;
-      });
+    function renderLogs(){
+      const box=document.getElementById('log-list'); if(!box) return;
+      const issueRows = state.issues.map(i => `<div class="rounded-2xl bg-rose-50 border border-rose-100 p-3"><b>${i.apartment}</b><br><span>${i.phase}: ${i.text}</span><br><span class="text-rose-700 font-bold">${i.flags.join(', ')}</span></div>`).join('');
+      const logs = state.logs.map(l=>`<div class="rounded-2xl bg-slate-50 border border-slate-100 p-3"><b>${l.apartment}</b><br>${l.operator} • ${new Date(l.date).toLocaleString('it-IT')} • ${l.executionMode || 'Log'}${l.checklistCompiledBy ? '<br>Checklist compilata da: '+escapeHtml(l.checklistCompiledBy) : ''}${l.checklistConfirmedBy ? '<br>Confermata da: '+escapeHtml(l.checklistConfirmedBy) : ''}</div>`).join('');
+      box.innerHTML = logs + issueRows || '<p class="text-slate-400">Nessun log.</p>';
     }
 
+    function renderLegionellaRegister(){
+      const box=document.getElementById('legionella-register-list'); if(!box) return;
+      box.innerHTML = state.legionellaRegister.map(r=>`<div class="rounded-2xl bg-purple-50 border border-purple-100 p-3"><b>${r.apartment}</b><br>${r.operator} • ${new Date(r.date).toLocaleString('it-IT')}<br><span class="font-black text-purple-700">${r.status}</span></div>`).join('') || '<p class="text-slate-400">Nessun registro ancora.</p>';
+    }
+
+    function setupRoleNavigation(){
+      const nav=document.getElementById('nav-grid'); const isSup=state.user==='Supervisore 2EMME';
+      const items = isSup
+        ? [['home','fa-house','Home'],['supervisor','fa-user-tie','Admin'],['inventory','fa-boxes-stacked','Scorte'],['logs','fa-list','Log']]
+        : [['home','fa-house','Home'],['inventory','fa-boxes-stacked','Scorte'],['logs','fa-list','Log']];
+      nav.className = `grid grid-cols-${items.length} px-2 py-2`;
+      nav.innerHTML = items.map(i => `<button onclick="showView('${i[0]}')" class="py-2 text-[11px] font-black text-slate-500"><i class="fa-solid ${i[1]} block text-lg mb-0.5"></i>${i[2]}</button>`).join('');
+    }
+
+    function showView(name){
+      ['home','checklist','inventory','supervisor','planning','templates','legionella','logs'].forEach(v => { const el=document.getElementById('view-'+v); if(el) el.classList.toggle('hidden', v!==name); });
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+    function scrollToPhase(i){ document.getElementById('phase-'+i)?.scrollIntoView({behavior:'smooth'}); }
     function openDamageReport(){ document.getElementById('damage-modal').classList.remove('hidden'); }
     function closeDamageReport(){ document.getElementById('damage-modal').classList.add('hidden'); }
-    function saveDamageReport(){
-      const title = document.getElementById('damage-title').value.trim();
-      if(!title){ toast('Inserisci il titolo del danno'); return; }
-      state.issues.unshift({ title, note: document.getElementById('damage-note').value, date: new Date().toISOString(), user: state.user });
-      saveState(); renderSupervisor(); closeDamageReport(); toast('Segnalazione salvata');
-    }
-    function formatDate(d){ return new Date(d+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit', month:'2-digit'}); }
+    function saveDamageReport(){ state.issues.push({apartment: currentShift?.apartment || 'Non associato', phase:'Danno rapido', text:val('damage-title'), flags:['Foto necessaria'], note:val('damage-note'), operator:state.user, date:new Date().toISOString(), status:'Aperta'}); saveState(); closeDamageReport(); renderLogs(); toast('Segnalazione salvata'); }
+    function previewPhoto(e,id){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>document.getElementById(id).innerHTML=`<img src="${r.result}" class="w-full h-24 object-cover rounded-2xl">`; r.readAsDataURL(f); }
+    function formatDate(d){ if(!d) return ''; return new Date(d+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+    function val(id){ return document.getElementById(id)?.value || ''; }
+    function escapeHtml(str){ return String(str||'').replace(/[&<>'"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s])); }
+    function escapeAttr(str){ return escapeHtml(str).replace(/`/g,'&#96;'); }
 
-    window.addEventListener('load', bootApp);
+    bootApp();
   </script>
-
-
 </body>
 </html>
