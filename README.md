@@ -8,10 +8,7 @@ Questa è la versione corretta da pubblicare.
 - Admin: /admin/
 - Netlify publish directory: .
 
-PIN configurati nella mobile app:
-- Maria: 1827
-- Carmen: 2326
-- Supervisore: 2026
+
 
 Nota sicurezza:
 Il PIN lato frontend blocca l'accesso normale all'interfaccia, ma non è sicurezza bancaria.
