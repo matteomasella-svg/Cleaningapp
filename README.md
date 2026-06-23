@@ -1,68 +1,40 @@
-# 2EMME Cleaning - File riscritti da capo
+# 2EMME Cleaning - Netlify Deploy
 
-Questa cartella contiene i file puliti e semplificati.
+Questa versione è pronta per Netlify.
 
-## 1. Apps Script backend
-
-File:
+## Struttura corretta
 
 ```text
-apps-script/Code.gs
+2emme-cleaning-netlify/
+├── index.html
+├── netlify.toml
+├── config.json
+├── mobile/
+│   └── index.html
+├── admin/
+│   └── index.html
+└── apps-script/
+    └── Code.gs
 ```
 
-Dove va:
+## Su Netlify
+
+Impostazioni:
 
 ```text
-Google Sheet > Estensioni > Apps Script > Code.gs
+Build command: lascia vuoto
+Publish directory: .
 ```
 
-In questo file NON devi incollare l'URL /exec.
-
-## 2. Mobile app
-
-File:
+## URL dopo deploy
 
 ```text
-mobile/index.html
+https://TUO-SITO.netlify.app/
+https://TUO-SITO.netlify.app/mobile/
+https://TUO-SITO.netlify.app/admin/
 ```
 
-Qui l'URL del backend è già inserito in alto:
-
-```js
-const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwnXtCVV8BD_5xiItJqZ1YjKqTZCzqvUds2r_tzNVZeWqIJBRERcZtn2mZJKkgmdMHq/exec";
-```
-
-## 3. Dashboard admin
-
-File:
-
-```text
-admin/index.html
-```
-
-Qui l'URL del backend è già inserito in alto:
-
-```js
-const BACKEND_URL = "https://script.google.com/macros/s/AKfycbwnXtCVV8BD_5xiItJqZ1YjKqTZCzqvUds2r_tzNVZeWqIJBRERcZtn2mZJKkgmdMHq/exec";
-```
-
-## 4. Config opzionale
-
-File:
-
-```text
-config.json
-```
-
-Serve solo per repository/documentazione. Non devi incollarlo dentro Apps Script.
-
-## Google Sheet
-
-```text
-https://docs.google.com/spreadsheets/d/1chEViDrAke793wJZIILx_NVrnheOgRZSTAE6X0CBTFw/edit
-```
-
-## Backend Apps Script
+## Backend
 
 ```text
 https://script.google.com/macros/s/AKfycbwnXtCVV8BD_5xiItJqZ1YjKqTZCzqvUds2r_tzNVZeWqIJBRERcZtn2mZJKkgmdMHq/exec
@@ -72,7 +44,4 @@ https://script.google.com/macros/s/AKfycbwnXtCVV8BD_5xiItJqZ1YjKqTZCzqvUds2r_tzN
 
 ```text
 https://script.google.com/macros/s/AKfycbwnXtCVV8BD_5xiItJqZ1YjKqTZCzqvUds2r_tzNVZeWqIJBRERcZtn2mZJKkgmdMHq/exec?action=ping
-https://script.google.com/macros/s/AKfycbwnXtCVV8BD_5xiItJqZ1YjKqTZCzqvUds2r_tzNVZeWqIJBRERcZtn2mZJKkgmdMHq/exec?action=mobile
-https://script.google.com/macros/s/AKfycbwnXtCVV8BD_5xiItJqZ1YjKqTZCzqvUds2r_tzNVZeWqIJBRERcZtn2mZJKkgmdMHq/exec?action=dashboard
-https://script.google.com/macros/s/AKfycbwnXtCVV8BD_5xiItJqZ1YjKqTZCzqvUds2r_tzNVZeWqIJBRERcZtn2mZJKkgmdMHq/exec?action=syncSmoobu
 ```
