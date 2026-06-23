@@ -10,294 +10,63 @@
     tailwind.config = { theme: { extend: { colors: { emme:'#0f172a', emmeBlue:'#0284c7', emmeGold:'#f59e0b' } } } }
   </script>
   <style>
-    body { background:#f8fafc; }
-    .card { background:white; border:1px solid #e2e8f0; border-radius:24px; box-shadow:0 10px 30px rgba(15,23,42,.04); }
-    .tab-active { background:#0284c7; color:white; }
-    .tab { border-radius:16px; padding:12px 14px; font-weight:900; display:flex; gap:10px; align-items:center; }
-    .pill { border-radius:999px; padding:4px 10px; font-size:11px; font-weight:900; display:inline-flex; align-items:center; gap:6px; }
-    .input { width:100%; border:1px solid #cbd5e1; background:#fff; border-radius:14px; padding:10px 12px; outline:none; font-weight:700; }
-    .input:focus { box-shadow:0 0 0 3px #bae6fd; border-color:#38bdf8; }
-    th { font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:#64748b; text-align:left; padding:12px; border-bottom:1px solid #e2e8f0; }
-    td { padding:12px; border-bottom:1px solid #f1f5f9; font-size:13px; vertical-align:top; }
+    body{background:#f8fafc;font-size:16px}.card{background:#fff;border:1px solid #e2e8f0;border-radius:24px;box-shadow:0 10px 30px rgba(15,23,42,.04)}
+    .tab{border-radius:16px;padding:12px 14px;font-weight:900;display:flex;gap:10px;align-items:center}.tab-active{background:#0284c7;color:#fff}.input{width:100%;border:1px solid #cbd5e1;background:#fff;border-radius:14px;padding:12px;outline:none;font-weight:700}.input:focus{box-shadow:0 0 0 3px #bae6fd;border-color:#38bdf8}th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#64748b;text-align:left;padding:12px;border-bottom:1px solid #e2e8f0}td{padding:12px;border-bottom:1px solid #f1f5f9;font-size:14px;vertical-align:top}.pill{border-radius:999px;padding:5px 11px;font-size:12px;font-weight:900;display:inline-flex;gap:6px;align-items:center}.hidden-force{display:none!important}
   </style>
-
-<script>
-/* 2EMME Cleaning - Backend configurato */
-window.TWO_EMME_CLEANING_CONFIG = {
-  APP_NAME: "2EMME Cleaning",
-  BACKEND_URL: "https://script.google.com/macros/s/AKfycbwnXtCVV8BD_5xiItJqZ1YjKqTZCzqvUds2r_tzNVZeWqIJBRERcZtn2mZJKkgmdMHq/exec",
-  GOOGLE_SHEET_ID: "1chEViDrAke793wJZIILx_NVrnheOgRZSTAE6X0CBTFw",
-  GOOGLE_SHEET_URL: "https://docs.google.com/spreadsheets/d/1chEViDrAke793wJZIILx_NVrnheOgRZSTAE6X0CBTFw/edit",
-  VERSION: "admin-v4"
-};
-
-async function twoEmmeApiGet(action, params = {}) {
-  const url = new URL(window.TWO_EMME_CLEANING_CONFIG.BACKEND_URL);
-  url.searchParams.set("action", action);
-  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
-  const response = await fetch(url.toString(), { method: "GET" });
-  return await response.json();
-}
-
-async function twoEmmeApiPost(payload) {
-  const response = await fetch(window.TWO_EMME_CLEANING_CONFIG.BACKEND_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(payload)
-  });
-  return await response.json();
-}
-</script>
-
 </head>
 <body class="text-slate-800">
-  <div class="min-h-screen grid grid-cols-[280px_1fr]">
+  <section id="admin-login" class="min-h-screen flex items-center justify-center p-6 bg-slate-950">
+    <div class="w-full max-w-md bg-white rounded-[2rem] p-8 shadow-2xl space-y-6">
+      <div class="text-center space-y-2"><div class="mx-auto h-16 w-16 rounded-3xl bg-sky-50 text-emmeBlue flex items-center justify-center text-2xl"><i class="fa-solid fa-lock"></i></div><h1 class="text-2xl font-black">Accesso Amministratore</h1><p class="text-sm text-slate-500">Dashboard desktop protetta. Inserisci il PIN supervisore.</p></div>
+      <form onsubmit="adminLogin(event)" class="space-y-4"><input id="admin-pin" type="password" inputmode="numeric" maxlength="4" class="input text-center text-3xl tracking-[.45em]" placeholder="••••" autocomplete="off" required><button class="w-full bg-emmeBlue text-white rounded-2xl py-4 font-black text-lg">Entra</button></form>
+      <p id="login-error" class="hidden text-center text-sm font-black text-rose-600">PIN non corretto</p>
+    </div>
+  </section>
+
+  <div id="admin-app" class="hidden min-h-screen grid grid-cols-[280px_1fr]">
     <aside class="bg-emme text-white p-5 sticky top-0 h-screen flex flex-col">
-      <div class="flex items-center gap-3 mb-8">
-        <div class="h-12 w-12 rounded-2xl bg-sky-500 flex items-center justify-center text-xl"><i class="fa-solid fa-broom"></i></div>
-        <div><h1 class="text-xl font-black">2EMME Cleaning</h1><p class="text-xs text-slate-300 font-semibold">Desktop Admin Console</p></div>
-      </div>
+      <div class="flex items-center gap-3 mb-8"><div class="h-12 w-12 rounded-2xl bg-sky-500 flex items-center justify-center text-xl"><i class="fa-solid fa-broom"></i></div><div><h1 class="text-xl font-black">2EMME Cleaning</h1><p class="text-xs text-slate-300 font-semibold">Desktop Admin Console</p></div></div>
       <nav class="space-y-2" id="side-tabs">
         <button class="tab tab-active w-full" data-view="dashboard"><i class="fa-solid fa-chart-line"></i>Dashboard</button>
         <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="planning"><i class="fa-solid fa-calendar-plus"></i>Pianificazione</button>
-        <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="legionella"><i class="fa-solid fa-bacteria"></i>Registro Legionella</button>
-        <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="issues"><i class="fa-solid fa-triangle-exclamation"></i>Segnalazioni</button>
-        <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="stock"><i class="fa-solid fa-boxes-stacked"></i>Scorte</button>
-        <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="compliance"><i class="fa-solid fa-clipboard-check"></i>Compliance</button>
-        <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="smoobu"><i class="fa-solid fa-calendar-days"></i>Smoobu</button>
-        <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="settings"><i class="fa-solid fa-gear"></i>Google Sheet</button>
+        <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="reminders"><i class="fa-solid fa-bell"></i>Reminder Addetti</button>
+        <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="stock"><i class="fa-solid fa-warehouse"></i>Magazzino</button>
+        <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="inventory"><i class="fa-solid fa-list-check"></i>Inventari Casa</button>
+        <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="compliance"><i class="fa-solid fa-shield-halved"></i>Compliance</button>
+        <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="settings"><i class="fa-solid fa-table"></i>Google Sheet</button>
       </nav>
-      <div class="mt-auto text-[11px] text-slate-400 leading-relaxed">
-        <b>© 2026 2EMME RE & Consulting</b><br>2EMME Cleaning™<br>Housekeeping • Inventory • Safety • Compliance • Team Checklist
-      </div>
+      <button onclick="adminLogout()" class="mt-6 rounded-2xl bg-white/10 py-3 font-black text-slate-200 hover:bg-white/20"><i class="fa-solid fa-right-from-bracket mr-2"></i>Esci</button>
+      <div class="mt-auto text-[11px] text-slate-400 leading-relaxed"><b>© 2026 2EMME RE & Consulting</b><br>2EMME Cleaning™<br>Housekeeping • Inventory • Safety • Compliance</div>
     </aside>
 
     <main class="p-6 xl:p-8 space-y-6">
-      <header class="flex items-center justify-between">
-        <div>
-          <p class="text-xs uppercase tracking-widest font-black text-sky-600">Amministrazione operativa</p>
-          <h2 id="page-title" class="text-3xl font-black text-slate-950">Dashboard</h2>
-          <p class="text-sm text-slate-500 mt-1">Vista desktop dettagliata: turni, checklist, scorte, anomalie, Smoobu, registro legionella e compliance programmate.</p>
-        </div>
-        <div class="flex gap-2">
-          <button onclick="loadFromGoogleSheet()" class="rounded-2xl bg-emmeBlue text-white px-4 py-3 font-black"><i class="fa-solid fa-cloud-arrow-down mr-2"></i>Leggi Google Sheet</button>
-          <button onclick="exportCsv()" class="rounded-2xl bg-white border border-slate-200 px-4 py-3 font-black"><i class="fa-solid fa-file-csv mr-2"></i>Export CSV</button>
-        </div>
-      </header>
+      <header class="flex items-center justify-between"><div><p class="text-xs uppercase tracking-widest font-black text-sky-600">Amministrazione operativa</p><h2 id="page-title" class="text-3xl font-black text-slate-950">Dashboard</h2><p class="text-sm text-slate-500 mt-1">Console protetta per turni, magazzino, inventari, compliance e reminder addetti.</p></div><div class="flex gap-2"><a href="../mobile/" target="_blank" class="rounded-2xl bg-white border border-slate-200 px-4 py-3 font-black"><i class="fa-solid fa-mobile-screen mr-2"></i>Apri Mobile</a><a href="https://docs.google.com/spreadsheets/d/1chEViDrAke793wJZIILx_NVrnheOgRZSTAE6X0CBTFw/edit" target="_blank" class="rounded-2xl bg-emmeBlue text-white px-4 py-3 font-black"><i class="fa-solid fa-table mr-2"></i>Google Sheet</a></div></header>
 
       <section id="view-dashboard" class="view space-y-6">
-        <div class="grid grid-cols-5 gap-4">
-          <div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Turni</span><strong id="kpi-shifts" class="block text-3xl mt-1">0</strong></div>
-          <div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Completati</span><strong id="kpi-completed" class="block text-3xl mt-1 text-emerald-600">0</strong></div>
-          <div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Segnalazioni</span><strong id="kpi-issues" class="block text-3xl mt-1 text-rose-600">0</strong></div>
-          <div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Registro Legionella</span><strong id="kpi-legionella" class="block text-3xl mt-1 text-purple-600">0</strong></div>
-          <div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Compliance in scadenza</span><strong id="kpi-compliance-due" class="block text-3xl mt-1 text-orange-600">0</strong></div>
-        </div>
-        <div class="grid grid-cols-3 gap-6">
-          <div class="card p-5 col-span-2">
-            <h3 class="font-black text-lg mb-4">Turni prossimi / attivi</h3>
-            <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Data</th><th>Alloggio</th><th>Ospite</th><th>Checklist</th><th>Team / compilatore</th><th>Stato</th></tr></thead><tbody id="dashboard-shifts"></tbody></table></div>
-          </div>
-          <div class="card p-5">
-            <h3 class="font-black text-lg mb-4">Alert prioritari</h3>
-            <div id="priority-alerts" class="space-y-3 text-sm"></div>
-          </div>
-        </div>
+        <div class="grid grid-cols-5 gap-4"><div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Turni</span><strong class="block text-3xl mt-1">4</strong></div><div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Scorte</span><strong class="block text-3xl mt-1 text-amber-600">5</strong></div><div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Reminder</span><strong id="kpi-reminders" class="block text-3xl mt-1 text-sky-600">0</strong></div><div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Compliance</span><strong class="block text-3xl mt-1 text-emerald-600">OK</strong></div><div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Accesso</span><strong class="block text-3xl mt-1 text-emerald-600"><i class="fa-solid fa-lock"></i></strong></div></div>
+        <div class="grid grid-cols-3 gap-6"><div class="card p-5 col-span-2"><h3 class="font-black text-lg mb-4">Priorità operative</h3><div class="space-y-3 text-sm"><p class="rounded-2xl bg-orange-50 border border-orange-100 p-3"><b>Masotto Terrace View:</b> scorte maggiorate perché lontano dal Magazzino Bassano.</p><p class="rounded-2xl bg-rose-50 border border-rose-100 p-3"><b>The NoLo Studio:</b> inventario casa con alcune voci mancanti già tracciate.</p><p class="rounded-2xl bg-sky-50 border border-sky-100 p-3"><b>Mobile addetti:</b> usare la sezione Notifiche per leggere reminder e avvisi.</p></div></div><div class="card p-5"><h3 class="font-black text-lg mb-4">Sicurezza</h3><p class="text-sm text-slate-600">Dashboard protetta con PIN supervisore. Per sicurezza reale lato server serve autenticazione Netlify/Identity o backend Apps Script.</p></div></div>
       </section>
 
-      <section id="view-planning" class="view hidden space-y-6">
-        <div class="card p-5">
-          <div class="flex items-center justify-between mb-4"><h3 class="font-black text-lg">Pianifica / assegna turno</h3><span class="pill bg-amber-50 text-amber-700 border border-amber-100">Scorte staff + ospite sempre obbligatorie</span></div>
-          <form onsubmit="addShift(event)" class="grid grid-cols-6 gap-3">
-            <input id="new-date" type="date" class="input" required>
-            <input id="new-time" value="09:00-11:00" class="input" required>
-            <select id="new-apartment" class="input col-span-2"><option>The NoLo Suite</option><option>The NoLo Nest</option><option>The NoLo Heritage</option><option>The NoLo Studio</option><option>Masotto Terrace View</option></select>
-            <select id="new-cleaner" class="input col-span-2"><option>Maria Guadalupe Hernández de Alfaro & Carmen Hernández</option><option>Maria Guadalupe Hernández de Alfaro</option><option>Carmen Hernández</option></select>
-            <input id="new-guest" placeholder="Nome ospite da Smoobu" class="input col-span-2">
-            <input id="new-booking" placeholder="N. prenotazione / riferimento" class="input">
-            <input id="new-checkin" type="date" class="input">
-            <input id="new-checkout" type="date" class="input">
-            <label class="flex items-center gap-2 rounded-2xl border border-slate-200 px-4 font-black"><input id="new-legionella" type="checkbox" checked> Legionella prevista</label>
-            <button class="bg-emmeBlue text-white rounded-2xl font-black">Salva turno</button>
-          </form>
-        </div>
-        <div class="card p-5"><h3 class="font-black text-lg mb-4">Turni pianificati</h3><div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Data</th><th>Alloggio</th><th>Addetti</th><th>Ospite/prenotazione</th><th>Obblighi</th><th>Compilazione checklist</th></tr></thead><tbody id="planning-table"></tbody></table></div></div>
-      </section>
+      <section id="view-planning" class="view hidden space-y-6"><div class="card p-5"><h3 class="font-black text-lg mb-4">Pianificazione turni</h3><p class="text-slate-600">Modulo operativo collegato al database Turni. Le scorte staff e ospite restano obbligatorie in ogni intervento.</p></div></section>
 
-      <section id="view-legionella" class="view hidden space-y-6">
-        <div class="card p-5 bg-purple-50 border-purple-100">
-          <h3 class="font-black text-lg text-purple-900">Registro Legionella</h3>
-          <p class="text-sm text-purple-900 mt-1">Registro separato per procedure antilegionella. Deve contenere data, alloggio, operatore, esito, anomalie, riferimento turno e prenotazione. L'app mobile genera la riga quando l'intervento con legionella prevista viene chiuso.</p>
-        </div>
-        <div class="card p-5"><div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Data</th><th>Alloggio</th><th>Operatore</th><th>Compilatore</th><th>Procedura</th><th>Esito</th><th>Ospite</th><th>Segnalazioni</th></tr></thead><tbody id="legionella-table"></tbody></table></div></div>
-      </section>
+      <section id="view-reminders" class="view hidden space-y-6"><div class="card p-5"><h3 class="font-black text-lg mb-4">Scrivi reminder agli addetti</h3><form onsubmit="saveReminder(event)" class="grid grid-cols-6 gap-3"><select id="reminder-to" class="input col-span-2"><option>Tutti</option><option>Maria Guadalupe Hernández de Alfaro</option><option>Carmen Hernández</option></select><select id="reminder-priority" class="input"><option>Normale</option><option>Importante</option><option>Urgente</option></select><input id="reminder-title" class="input col-span-3" placeholder="Titolo reminder" required><textarea id="reminder-message" class="input col-span-6" rows="4" placeholder="Messaggio per l'addetto" required></textarea><button class="bg-emmeBlue text-white rounded-2xl font-black py-3 col-span-2">Salva reminder</button></form></div><div class="card p-5"><h3 class="font-black text-lg mb-4">Reminder salvati</h3><div id="reminder-list" class="space-y-3 text-sm"></div></div></section>
 
-      <section id="view-issues" class="view hidden space-y-6"><div class="card p-5"><h3 class="font-black text-lg mb-4">Segnalazioni da checklist</h3><div id="issues-list" class="space-y-3"></div></div></section>
-      <section id="view-stock" class="view hidden space-y-6"><div class="card p-5"><h3 class="font-black text-lg mb-4">Verifica scorte obbligatorie</h3><div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Turno</th><th>Alloggio</th><th>Scorte staff</th><th>Scorte ospiti</th><th>Problemi</th></tr></thead><tbody id="stock-table"></tbody></table></div></div></section>
-
-      <section id="view-compliance" class="view hidden space-y-6">
-        <div class="card p-5 bg-orange-50 border-orange-100">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <h3 class="font-black text-lg text-orange-950">Compliance & manutenzioni programmate</h3>
-              <p class="text-sm text-orange-900 mt-1">Pianificazione centralizzata di prelievi annuali, svuotamento caldaie periodico, manutenzione estintori, controllo rilevatori CO/CO2 e altri obblighi interni. Ogni attività ha scadenza, ricorrenza, responsabile, stato e prova documentale.</p>
-            </div>
-            <span class="pill bg-white text-orange-700 border border-orange-200">Letta/scritta nello stesso Google Sheet</span>
-          </div>
-        </div>
-        <div class="grid grid-cols-4 gap-4">
-          <div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Totale attività</span><strong id="compliance-total" class="block text-3xl mt-1">0</strong></div>
-          <div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Scadute</span><strong id="compliance-overdue" class="block text-3xl mt-1 text-rose-600">0</strong></div>
-          <div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Entro 30 giorni</span><strong id="compliance-due30" class="block text-3xl mt-1 text-amber-600">0</strong></div>
-          <div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Completate</span><strong id="compliance-done" class="block text-3xl mt-1 text-emerald-600">0</strong></div>
-        </div>
-        <div class="card p-5">
-          <div class="flex items-center justify-between mb-4"><h3 class="font-black text-lg">Nuova attività compliance</h3><span class="text-xs text-slate-400 font-bold">Le ricorrenze generano la prossima scadenza dopo la chiusura.</span></div>
-          <form onsubmit="addCompliance(event)" class="grid grid-cols-6 gap-3">
-            <select id="comp-type" class="input col-span-2">
-              <option>Prelievo annuale acqua / Legionella</option>
-              <option>Svuotamento caldaia / boiler</option>
-              <option>Manutenzione estintori</option>
-              <option>Controllo rilevatore CO/CO2</option>
-              <option>Controllo rilevatore fumo</option>
-              <option>Verifica kit primo soccorso</option>
-              <option>Altro controllo sicurezza</option>
-            </select>
-            <select id="comp-apartment" class="input"><option>Tutti gli alloggi</option><option>The NoLo Suite</option><option>The NoLo Nest</option><option>The NoLo Heritage</option><option>The NoLo Studio</option><option>Masotto Terrace View</option></select>
-            <input id="comp-due" type="date" class="input" required>
-            <select id="comp-frequency" class="input"><option value="annual">Annuale</option><option value="semester">Semestrale</option><option value="quarter">Trimestrale</option><option value="monthly">Mensile</option><option value="custom">Personalizzata</option></select>
-            <input id="comp-owner" class="input" placeholder="Responsabile / fornitore">
-            <button class="bg-emmeBlue text-white rounded-2xl font-black">Aggiungi</button>
-          </form>
-        </div>
-        <div class="card p-5">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="font-black text-lg">Scadenzario compliance</h3>
-            <div class="flex gap-2 text-xs font-black">
-              <button onclick="filterCompliance('all')" class="rounded-xl border border-slate-200 px-3 py-2">Tutte</button>
-              <button onclick="filterCompliance('overdue')" class="rounded-xl border border-rose-200 bg-rose-50 text-rose-700 px-3 py-2">Scadute</button>
-              <button onclick="filterCompliance('due')" class="rounded-xl border border-amber-200 bg-amber-50 text-amber-700 px-3 py-2">In scadenza</button>
-            </div>
-          </div>
-          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Stato</th><th>Scadenza</th><th>Tipo</th><th>Alloggio</th><th>Ricorrenza</th><th>Responsabile</th><th>Ultimo esito</th><th>Azioni</th></tr></thead><tbody id="compliance-table"></tbody></table></div>
-        </div>
-      </section>
-
-      <section id="view-smoobu" class="view hidden space-y-6">
-        <div class="card p-5"><h3 class="font-black text-lg mb-3">Calendari Smoobu configurati</h3><div id="calendar-map" class="grid grid-cols-2 gap-3 text-sm"></div></div>
-        <div class="card p-5"><h3 class="font-black text-lg mb-4">Prenotazioni / blocchi Smoobu letti</h3><div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Alloggio</th><th>Ospite / Blocco</th><th>Canale</th><th>Check-in</th><th>Check-out</th><th>Riferimento</th></tr></thead><tbody id="smoobu-table"></tbody></table></div></div>
-      </section>
-
-      <section id="view-settings" class="view hidden space-y-6">
-        <div class="card p-5 space-y-4">
-          <h3 class="font-black text-lg">Connessione allo stesso Google Sheet</h3>
-          <p class="text-sm text-slate-500">Inserisci l'URL Web App di Google Apps Script. Lo stesso endpoint deve accettare POST dalla mobile app e GET dalla dashboard desktop. Consiglio fogli separati: <b>Interventi</b>, <b>Segnalazioni</b>, <b>RegistroLegionella</b>, <b>Scorte</b>, <b>Turni</b>, <b>Compliance</b>, <b>ConfermeTeam</b>.</p>
-          <div class="grid grid-cols-[1fr_auto] gap-3"><input id="sheet-url" class="input" placeholder="https://script.google.com/macros/s/AKfycbwnXtCVV8BD_5xiItJqZ1YjKqTZCzqvUds2r_tzNVZeWqIJBRERcZtn2mZJKkgmdMHq/exec"><button onclick="saveSheetUrl()" class="bg-emmeBlue text-white rounded-2xl px-5 font-black">Salva</button></div>
-          <pre class="bg-slate-950 text-slate-200 rounded-2xl p-4 text-xs overflow-auto">GET atteso: { shifts:[], logs:[], issues:[], legionellaRegister:[], reservations:[] }
-POST mobile consigliato: { type:'intervento'|'segnalazione'|'legionella'|'scorte', payload:{...} }</pre>
-        </div>
-      </section>
+      <section id="view-stock" class="view hidden space-y-6"><div class="card p-5"><h3 class="font-black text-lg mb-4">Magazzino Bassano</h3><p class="text-slate-600 mb-4">Giacenze modificabili nel Google Sheet: prodotti presenti, insufficienti e da acquistare.</p><a class="rounded-2xl bg-emmeBlue text-white px-4 py-3 font-black inline-block" target="_blank" href="https://docs.google.com/spreadsheets/d/1chEViDrAke793wJZIILx_NVrnheOgRZSTAE6X0CBTFw/edit#gid=213854387">Apri MagazzinoBassano</a></div></section>
+      <section id="view-inventory" class="view hidden space-y-6"><div class="card p-5"><h3 class="font-black text-lg mb-4">Inventari Casa Alloggi</h3><p class="text-slate-600 mb-4">Dotazioni fisse per alloggio: cucina, camera, bagno, business essentials e ricambi casa.</p><a class="rounded-2xl bg-emmeBlue text-white px-4 py-3 font-black inline-block" target="_blank" href="https://docs.google.com/spreadsheets/d/1chEViDrAke793wJZIILx_NVrnheOgRZSTAE6X0CBTFw/edit#gid=775635021">Apri InventarioCasaAlloggi</a></div></section>
+      <section id="view-compliance" class="view hidden space-y-6"><div class="card p-5"><h3 class="font-black text-lg mb-4">Compliance sicurezza</h3><p class="text-slate-600 mb-4">Kit pronto soccorso D.M. 388/2003, estintori, CO, gas, legionella e dotazioni obbligatorie/standard 2EMME.</p><a class="rounded-2xl bg-emmeBlue text-white px-4 py-3 font-black inline-block" target="_blank" href="https://docs.google.com/spreadsheets/d/1chEViDrAke793wJZIILx_NVrnheOgRZSTAE6X0CBTFw/edit#gid=43710867">Apri Compliance</a></div></section>
+      <section id="view-settings" class="view hidden space-y-6"><div class="card p-5"><h3 class="font-black text-lg mb-4">Google Sheet Database</h3><p class="text-slate-600 mb-4">Database operativo: Turni, Interventi, ScorteAlloggi, MagazzinoBassano, MovimentiMagazzino, ReintegriMagazzino, InventarioCasaAlloggi, Compliance.</p><a class="rounded-2xl bg-emmeBlue text-white px-4 py-3 font-black inline-block" target="_blank" href="https://docs.google.com/spreadsheets/d/1chEViDrAke793wJZIILx_NVrnheOgRZSTAE6X0CBTFw/edit">Apri database</a></div></section>
     </main>
   </div>
 
   <script>
-    const SMOOBU_CALENDARS = [
-      { apartment:'Masotto Terrace View', label:'Masotto Terrace - Masotto4', calendarId:'p5l54n483tgdd1m1sab84823hr628aal@import.calendar.google.com' },
-      { apartment:'The NoLo Heritage', label:'The NoLo Heritage - Termopili 29', calendarId:'b2l655umb7pteg0qipfd2fvh9kdlcfu0@import.calendar.google.com' },
-      { apartment:'The NoLo Nest', label:'The NoLo Nest - Bassano 32', calendarId:'47t9rhttt459anqg6ueudkufk98v9i75@import.calendar.google.com' },
-      { apartment:'The NoLo Studio', label:'The NoLo Studio - Chavez 1', calendarId:'lc5a2sdpn7urqkvhbnvcu7b4jmqi3i2j@import.calendar.google.com' },
-      { apartment:'The NoLo Suite', label:'The NoLo Apartment/Suite - Bassano 32', calendarId:'3u9918h52i0001phaqmmgs5f158ha2d2@import.calendar.google.com' }
-    ];
-
-    let db = JSON.parse(localStorage.getItem('emmeCleaningAdmin') || 'null') || {
-      shifts:[
-        {id:101,date:'2026-06-24',time:'13:00-15:00',apartment:'The NoLo Suite',cleaner:'Maria Guadalupe Hernández de Alfaro & Carmen Hernández',guestName:'Blocco calendario',bookingCode:'Blocco Smoobu',checkIn:'2026-05-03',checkOut:'2026-08-31',requiresLegionella:true,status:'Pianificato', checklistPolicy:'Una addetta compila, altra conferma se necessario'},
-        {id:102,date:'2026-06-24',time:'15:00-17:00',apartment:'The NoLo Nest',cleaner:'Maria Guadalupe Hernández de Alfaro & Carmen Hernández',guestName:'Blocco calendario',bookingCode:'Blocco Smoobu',checkIn:'2026-05-03',checkOut:'2026-08-31',requiresLegionella:true,status:'Pianificato', checklistPolicy:'Una addetta compila, altra conferma se necessario'},
-        {id:103,date:'2026-06-26',time:'09:00-11:00',apartment:'The NoLo Heritage',cleaner:'Maria Guadalupe Hernández de Alfaro & Carmen Hernández',guestName:'Yuniel José Abreu López',bookingCode:'Non presente nel Calendar',checkIn:'2026-05-27',checkOut:'2026-06-26',requiresLegionella:true,status:'Pianificato', checklistPolicy:'Una addetta compila, altra conferma se necessario'},
-        {id:104,date:'2026-06-26',time:'11:00-13:00',apartment:'Masotto Terrace View',cleaner:'Maria Guadalupe Hernández de Alfaro & Carmen Hernández',guestName:'Daniel Arnoud Knottenbelt',bookingCode:'Non presente nel Calendar',checkIn:'2026-06-17',checkOut:'2026-07-18',requiresLegionella:true,status:'Pianificato'}
-      ],
-      reservations:[
-        {apartment:'Masotto Terrace View',guestName:'Daniel Arnoud Knottenbelt',bookingCode:'Non presente nel Calendar',channel:'Direct booking',checkIn:'2026-06-17',checkOut:'2026-07-18',ref:'Smoobu Calendar'},
-        {apartment:'The NoLo Heritage',guestName:'Yuniel José Abreu López',bookingCode:'Non presente nel Calendar',channel:'Direct booking',checkIn:'2026-05-27',checkOut:'2026-06-26',ref:'Smoobu Calendar'},
-        {apartment:'The NoLo Studio',guestName:'Ömür Beşbınar',bookingCode:'Non presente nel Calendar',channel:'Direct booking',checkIn:'2026-07-06',checkOut:'2026-08-06',ref:'Smoobu Calendar'},
-        {apartment:'The NoLo Nest',guestName:'Blocco calendario',bookingCode:'Blocco Smoobu',channel:'Blocked',checkIn:'2026-05-03',checkOut:'2026-08-31',ref:'Smoobu Calendar'},
-        {apartment:'The NoLo Suite',guestName:'Blocco calendario',bookingCode:'Blocco Smoobu',channel:'Blocked',checkIn:'2026-05-03',checkOut:'2026-08-31',ref:'Smoobu Calendar'}
-      ],
-      compliance:[
-        {id:201,type:'Prelievo annuale acqua / Legionella',apartment:'Masotto Terrace View',dueDate:'2026-12-31',frequency:'annual',owner:'Laboratorio / tecnico incaricato',status:'Pianificato',lastOutcome:'Da programmare',documentRef:''},
-        {id:202,type:'Prelievo annuale acqua / Legionella',apartment:'The NoLo Heritage',dueDate:'2026-12-31',frequency:'annual',owner:'Laboratorio / tecnico incaricato',status:'Pianificato',lastOutcome:'Da programmare',documentRef:''},
-        {id:203,type:'Svuotamento caldaia / boiler',apartment:'Tutti gli alloggi',dueDate:'2026-09-30',frequency:'semester',owner:'Manutentore idraulico',status:'Pianificato',lastOutcome:'Da eseguire',documentRef:''},
-        {id:204,type:'Manutenzione estintori',apartment:'Tutti gli alloggi',dueDate:'2026-07-31',frequency:'semester',owner:'Fornitore antincendio',status:'Pianificato',lastOutcome:'Da eseguire',documentRef:''},
-        {id:205,type:'Controllo rilevatore CO/CO2',apartment:'Tutti gli alloggi',dueDate:'2026-07-15',frequency:'monthly',owner:'2EMME / staff',status:'Pianificato',lastOutcome:'Da verificare',documentRef:''},
-        {id:206,type:'Controllo rilevatore fumo',apartment:'Tutti gli alloggi',dueDate:'2026-07-15',frequency:'monthly',owner:'2EMME / staff',status:'Pianificato',lastOutcome:'Da verificare',documentRef:''}
-      ],
-      logs:[], issues:[], legionellaRegister:[]
-    };
-    const $ = id => document.getElementById(id);
-    let complianceFilter = 'all';
-    function save(){ localStorage.setItem('emmeCleaningAdmin', JSON.stringify(db)); }
-    function esc(v){ return String(v ?? '').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
-    function pill(text, cls){ return `<span class="pill ${cls}">${esc(text)}</span>`; }
-    function fmt(d){ return d ? new Date(d).toLocaleDateString('it-IT') : 'N/D'; }
-
-    document.querySelectorAll('#side-tabs button').forEach(btn=>btn.addEventListener('click',()=>show(btn.dataset.view)));
-    function show(view){
-      document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));
-      $('view-'+view).classList.remove('hidden');
-      document.querySelectorAll('#side-tabs button').forEach(b=>{b.classList.remove('tab-active'); b.classList.add('text-slate-300');});
-      const active=[...document.querySelectorAll('#side-tabs button')].find(b=>b.dataset.view===view); active.classList.add('tab-active'); active.classList.remove('text-slate-300');
-      $('page-title').textContent = active.textContent.trim();
-      render();
-    }
-    function render(){ renderKpis(); renderDashboard(); renderPlanning(); renderLegionella(); renderIssues(); renderStock(); renderCompliance(); renderSmoobu(); }
-    function renderKpis(){ $('kpi-shifts').textContent=db.shifts.length; $('kpi-completed').textContent=db.logs.length; $('kpi-issues').textContent=db.issues.length; $('kpi-legionella').textContent=db.legionellaRegister.length; const due=countComplianceDue(); if($('kpi-compliance-due')) $('kpi-compliance-due').textContent=due.overdue+due.due30; }
-    function teamChecklistSummary(shift){
-      const logs=db.logs.filter(l=>l.shiftId===shift.id);
-      const compiled=logs.find(l=>!l.needsCompilerLog && (l.checklistCompiledBy || l.operator));
-      const confirmations=logs.filter(l=>l.needsCompilerLog || l.checklistExecutionMode==='Effettuata da altro addetto');
-      if(compiled) return `${pill('Compilata','bg-emerald-50 text-emerald-700')}<br><span class="text-xs text-slate-500">Da: ${esc(compiled.checklistCompiledBy||compiled.operator)}</span>${confirmations.length?`<br><span class="text-xs text-indigo-600 font-bold">${confirmations.length} conferma/e team</span>`:''}`;
-      if(confirmations.length) return `${pill('Solo conferma team','bg-indigo-50 text-indigo-700')}<br><span class="text-xs text-slate-500">Manca log compilatore</span>`;
-      return `${pill('Da compilare','bg-amber-50 text-amber-700')}<br><span class="text-xs text-slate-400">Una sola addetta compila; l'altra può confermare.</span>`;
-    }
-
-    function renderDashboard(){
-      $('dashboard-shifts').innerHTML=db.shifts.map(s=>`<tr><td>${fmt(s.date)}<br><b>${esc(s.time)}</b></td><td><b>${esc(s.apartment)}</b></td><td>${esc(s.guestName)}<br><span class="text-xs text-slate-400">${esc(s.bookingCode)}</span></td><td>${pill('Pulizia','bg-slate-100 text-slate-700')} ${pill('Scorte staff','bg-amber-50 text-amber-700')} ${pill('Scorte ospiti','bg-amber-50 text-amber-700')} ${s.requiresLegionella?pill('Legionella','bg-purple-50 text-purple-700'):''}</td><td>${teamChecklistSummary(s)}</td><td>${pill(s.status||'Pianificato','bg-sky-50 text-sky-700')}</td></tr>`).join('');
-      const alerts=[]; if(db.issues.length) alerts.push(`${db.issues.length} segnalazioni aperte`); const missingLeg=db.shifts.filter(s=>s.requiresLegionella).length-db.legionellaRegister.length; if(missingLeg>0) alerts.push(`${missingLeg} procedure legionella da registrare`); const compDue=countComplianceDue(); if(compDue.overdue) alerts.push(`${compDue.overdue} compliance scadute da chiudere`); if(compDue.due30) alerts.push(`${compDue.due30} compliance in scadenza entro 30 giorni`); alerts.push('Scorte staff e ospite obbligatorie per ogni chiusura');
-      $('priority-alerts').innerHTML=alerts.map(a=>`<div class="rounded-2xl bg-amber-50 border border-amber-100 p-3 font-bold text-amber-900"><i class="fa-solid fa-triangle-exclamation mr-2"></i>${esc(a)}</div>`).join('');
-    }
-    function renderPlanning(){ $('planning-table').innerHTML=db.shifts.map(s=>`<tr><td>${fmt(s.date)}<br>${esc(s.time)}</td><td><b>${esc(s.apartment)}</b></td><td>${esc(s.cleaner)}</td><td>${esc(s.guestName)}<br><span class="text-xs text-slate-400">${esc(s.bookingCode)} • ${fmt(s.checkIn)}-${fmt(s.checkOut)}</span></td><td>${s.requiresLegionella?pill('Legionella','bg-purple-50 text-purple-700'):''} ${pill('Scorte 2/2','bg-emerald-50 text-emerald-700')}</td><td>${teamChecklistSummary(s)}</td></tr>`).join(''); }
-    function renderLegionella(){
-      const rows=db.legionellaRegister.length ? db.legionellaRegister : db.shifts.filter(s=>s.requiresLegionella).map(s=>({date:null,apartment:s.apartment,operator:'Da eseguire',checklistCompiledBy:'Da eseguire',procedure:'Flussaggio + controllo terminali + segnalazioni',outcome:'Non registrata',guestName:s.guestName,bookingCode:s.bookingCode,issues:[]}));
-      $('legionella-table').innerHTML=rows.map(r=>`<tr><td>${r.date?new Date(r.date).toLocaleString('it-IT'):'Da completare'}</td><td><b>${esc(r.apartment)}</b></td><td>${esc(r.operator)}</td><td>${esc(r.checklistCompiledBy||r.operator||'')}</td><td>${esc(r.procedure)}</td><td>${pill(r.outcome, r.date?'bg-emerald-50 text-emerald-700':'bg-amber-50 text-amber-700')}</td><td>${esc(r.guestName)}<br><span class="text-xs text-slate-400">${esc(r.bookingCode)}</span></td><td>${(r.issues||[]).length}</td></tr>`).join('');
-    }
-    function renderIssues(){ $('issues-list').innerHTML = db.issues.length ? db.issues.map(i=>`<div class="rounded-2xl bg-rose-50 border border-rose-100 p-4"><b>${esc(i.apartment||'')}</b> • ${esc(i.phase||'Checklist')}<br><span class="text-sm">${esc(i.text||i.title||'Segnalazione')}</span><br><span class="text-xs text-rose-700 font-bold">${esc((i.flags||[]).join(', '))}</span></div>`).join('') : '<p class="text-slate-400 font-bold">Nessuna segnalazione registrata.</p>'; }
-    function renderStock(){ $('stock-table').innerHTML=db.shifts.map(s=>`<tr><td>${fmt(s.date)} ${esc(s.time)}</td><td><b>${esc(s.apartment)}</b></td><td>${pill('Obbligatoria','bg-amber-50 text-amber-700')}</td><td>${pill('Obbligatoria','bg-amber-50 text-amber-700')}</td><td>${db.issues.filter(i=>i.apartment===s.apartment).length}</td></tr>`).join(''); }
-
-    function daysUntil(dateStr){ const d=new Date(dateStr+'T00:00:00'); const today=new Date(); today.setHours(0,0,0,0); return Math.round((d-today)/86400000); }
-    function complianceStatus(c){ if(c.status==='Completato') return {key:'done', label:'Completato', cls:'bg-emerald-50 text-emerald-700'}; const days=daysUntil(c.dueDate); if(days<0) return {key:'overdue', label:'Scaduto', cls:'bg-rose-50 text-rose-700'}; if(days<=30) return {key:'due', label:'In scadenza', cls:'bg-amber-50 text-amber-700'}; return {key:'planned', label:'Pianificato', cls:'bg-sky-50 text-sky-700'}; }
-    function countComplianceDue(){ const rows=db.compliance||[]; return {overdue:rows.filter(c=>complianceStatus(c).key==='overdue').length, due30:rows.filter(c=>complianceStatus(c).key==='due').length}; }
-    function nextDueDate(dateStr, frequency){ const d=new Date(dateStr+'T00:00:00'); if(frequency==='annual') d.setFullYear(d.getFullYear()+1); else if(frequency==='semester') d.setMonth(d.getMonth()+6); else if(frequency==='quarter') d.setMonth(d.getMonth()+3); else if(frequency==='monthly') d.setMonth(d.getMonth()+1); else d.setMonth(d.getMonth()+1); return d.toISOString().slice(0,10); }
-    function renderCompliance(){
-      const rows=db.compliance||[]; const due=countComplianceDue();
-      if($('compliance-total')) $('compliance-total').textContent=rows.length;
-      if($('compliance-overdue')) $('compliance-overdue').textContent=due.overdue;
-      if($('compliance-due30')) $('compliance-due30').textContent=due.due30;
-      if($('compliance-done')) $('compliance-done').textContent=rows.filter(c=>c.status==='Completato').length;
-      const filtered=rows.filter(c=> complianceFilter==='all' || complianceStatus(c).key===complianceFilter || (complianceFilter==='due' && complianceStatus(c).key==='due'));
-      if(!$('compliance-table')) return;
-      $('compliance-table').innerHTML=filtered.map(c=>{ const st=complianceStatus(c); return `<tr><td>${pill(st.label, st.cls)}</td><td><b>${fmt(c.dueDate)}</b><br><span class="text-xs text-slate-400">${daysUntil(c.dueDate)} gg</span></td><td><b>${esc(c.type)}</b></td><td>${esc(c.apartment)}</td><td>${esc(freqLabel(c.frequency))}</td><td>${esc(c.owner||'')}</td><td>${esc(c.lastOutcome||'')}</td><td class="space-x-1"><button onclick="completeCompliance(${c.id})" class="rounded-xl bg-emerald-50 text-emerald-700 px-3 py-2 text-xs font-black">Chiudi</button><button onclick="flagComplianceIssue(${c.id})" class="rounded-xl bg-rose-50 text-rose-700 px-3 py-2 text-xs font-black">Alert</button></td></tr>`; }).join('') || '<tr><td colspan="8" class="text-slate-400 font-bold">Nessuna attività compliance in questa vista.</td></tr>';
-    }
-    function freqLabel(f){ return ({annual:'Annuale',semester:'Semestrale',quarter:'Trimestrale',monthly:'Mensile',custom:'Personalizzata'}[f]||f); }
-    function filterCompliance(f){ complianceFilter=f; renderCompliance(); }
-    function addCompliance(e){ e.preventDefault(); db.compliance=db.compliance||[]; db.compliance.push({id:Date.now(),type:$('comp-type').value,apartment:$('comp-apartment').value,dueDate:$('comp-due').value,frequency:$('comp-frequency').value,owner:$('comp-owner').value,status:'Pianificato',lastOutcome:'Da eseguire',documentRef:''}); save(); e.target.reset(); render(); }
-    function completeCompliance(id){ const c=(db.compliance||[]).find(x=>x.id===id); if(!c) return; const oldDue=c.dueDate; c.status='Completato'; c.lastOutcome='Completato il '+new Date().toLocaleDateString('it-IT'); db.logs.push({type:'compliance',date:new Date().toISOString(),apartment:c.apartment,operator:c.owner||'Admin',title:c.type,outcome:c.lastOutcome}); if(c.frequency!=='custom'){ db.compliance.push({...c,id:Date.now(),dueDate:nextDueDate(oldDue,c.frequency),status:'Pianificato',lastOutcome:'Prossima ricorrenza generata automaticamente'}); } save(); render(); }
-    function flagComplianceIssue(id){ const c=(db.compliance||[]).find(x=>x.id===id); if(!c) return; c.status='Alert'; c.lastOutcome='Anomalia / documento mancante'; db.issues.push({apartment:c.apartment,phase:'Compliance',title:c.type,text:'Compliance da verificare: '+c.type,flags:['alert compliance','verifica documenti']}); save(); render(); }
-    function renderSmoobu(){ $('calendar-map').innerHTML=SMOOBU_CALENDARS.map(c=>`<div class="rounded-2xl bg-slate-50 border border-slate-200 p-3"><b>${esc(c.apartment)}</b><br><span class="text-xs text-slate-500">${esc(c.calendarId)}</span></div>`).join(''); $('smoobu-table').innerHTML=db.reservations.map(r=>`<tr><td><b>${esc(r.apartment)}</b></td><td>${esc(r.guestName)}</td><td>${esc(r.channel)}</td><td>${fmt(r.checkIn)}</td><td>${fmt(r.checkOut)}</td><td>${esc(r.bookingCode||r.ref)}</td></tr>`).join(''); }
-    function addShift(e){ e.preventDefault(); db.shifts.push({id:Date.now(),date:$('new-date').value,time:$('new-time').value,apartment:$('new-apartment').value,cleaner:$('new-cleaner').value,guestName:$('new-guest').value||'Da associare',bookingCode:$('new-booking').value||'Da associare',checkIn:$('new-checkin').value,checkOut:$('new-checkout').value,requiresLegionella:$('new-legionella').checked,status:'Pianificato'}); save(); e.target.reset(); render(); }
-    function saveSheetUrl(){ localStorage.setItem('emmeCleaningSheetUrl',$('sheet-url').value); alert('URL Google Sheet salvato in locale.'); }
-    async function loadFromGoogleSheet(){ const url=localStorage.getItem('emmeCleaningSheetUrl')||$('sheet-url').value; if(!url){ alert('Inserisci prima URL Web App in Google Sheet.'); return; } try{ const res=await fetch(url); const data=await res.json(); db={...db,...data}; save(); render(); alert('Dati letti dal Google Sheet.'); }catch(err){ alert('Impossibile leggere Google Sheet: '+err.message); } }
-    function exportCsv(){ const rows=[['tipo','data','alloggio','operatore','compilatore_checklist','confermato_da','ospite','prenotazione','esito'], ...db.shifts.map(s=>['turno',s.date,s.apartment,s.cleaner,'','',s.guestName,s.bookingCode,s.status]), ...db.legionellaRegister.map(r=>['legionella',r.date,r.apartment,r.operator,r.checklistCompiledBy||r.operator,'',r.guestName,r.bookingCode,r.outcome]), ...((db.compliance||[]).map(c=>['compliance',c.dueDate,c.apartment,c.owner,'','', '', c.type,c.status||'Pianificato']))]; const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='2EMME_Cleaning_Admin_export.csv'; a.click(); }
-    $('sheet-url').value=localStorage.getItem('emmeCleaningSheetUrl')||''; render();
+    const ADMIN_PIN='2026';
+    function adminLogin(e){e.preventDefault();const ok=(document.getElementById('admin-pin').value||'').trim()===ADMIN_PIN;if(!ok){document.getElementById('login-error').classList.remove('hidden');return;}sessionStorage.setItem('2emme_admin_auth','1');showAdmin();}
+    function adminLogout(){sessionStorage.removeItem('2emme_admin_auth');location.reload();}
+    function showAdmin(){document.getElementById('admin-login').classList.add('hidden');document.getElementById('admin-app').classList.remove('hidden');renderReminders();}
+    if(sessionStorage.getItem('2emme_admin_auth')==='1') showAdmin();
+    document.querySelectorAll('#side-tabs button').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('#side-tabs button').forEach(b=>{b.classList.remove('tab-active');b.classList.add('text-slate-300')});btn.classList.add('tab-active');btn.classList.remove('text-slate-300');document.querySelectorAll('.view').forEach(v=>v.classList.add('hidden'));document.getElementById('view-'+btn.dataset.view).classList.remove('hidden');document.getElementById('page-title').textContent=btn.textContent.trim();}));
+    function saveReminder(e){e.preventDefault();const arr=JSON.parse(localStorage.getItem('2emme_reminders')||'[]');arr.unshift({id:'REM-'+Date.now(),date:new Date().toISOString(),to:document.getElementById('reminder-to').value,priority:document.getElementById('reminder-priority').value,title:document.getElementById('reminder-title').value,message:document.getElementById('reminder-message').value,status:'Non letto'});localStorage.setItem('2emme_reminders',JSON.stringify(arr));e.target.reset();renderReminders();}
+    function renderReminders(){const arr=JSON.parse(localStorage.getItem('2emme_reminders')||'[]');const box=document.getElementById('reminder-list');const kpi=document.getElementById('kpi-reminders');if(kpi)kpi.textContent=arr.length;if(!box)return;box.innerHTML=arr.map(r=>`<div class="rounded-2xl border border-slate-100 bg-slate-50 p-4"><div class="flex justify-between gap-3"><b>${r.title}</b><span class="pill ${r.priority==='Urgente'?'bg-rose-100 text-rose-700':r.priority==='Importante'?'bg-amber-100 text-amber-700':'bg-sky-100 text-sky-700'}">${r.priority}</span></div><p class="mt-2">${r.message}</p><p class="text-xs text-slate-500 mt-2">Destinatario: ${r.to} • ${new Date(r.date).toLocaleString('it-IT')} • ${r.status}</p></div>`).join('')||'<p class="text-slate-400">Nessun reminder salvato.</p>';}
   </script>
 </body>
 </html>
