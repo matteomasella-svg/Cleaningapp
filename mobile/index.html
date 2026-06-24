@@ -233,6 +233,9 @@ async function twoEmmeApiPost(payload) {
           <p class="text-[11px] uppercase tracking-wider font-black text-sky-600">Comunicazioni operative</p>
           <h2 class="text-xl font-black">Notifiche</h2>
           <p class="text-xs text-slate-500 mt-1">Reminder amministratore, reintegri Magazzino Bassano e avvisi compliance. Questa sezione sostituisce definitivamente Help.</p>
+          <button onclick="loadNotificationsFromBackend()" class="mt-3 w-full rounded-2xl bg-sky-50 text-sky-700 border border-sky-100 py-3 font-black text-sm">
+            <i class="fa-solid fa-rotate mr-2"></i>Aggiorna notifiche
+          </button>
         </div>
         <div id="notifications-list" class="space-y-3"></div>
       </section>
@@ -616,6 +619,7 @@ async function twoEmmeApiPost(payload) {
       document.getElementById('today-date').textContent = todayIT();
       document.getElementById('whatsapp-link').href = 'https://wa.me/393330000000?text=' + encodeURIComponent('Ciao, ti contatto da 2EMME Cleaning.');
       setupRoleNavigation(); renderShifts(); renderInventory(); renderSupervisor(); renderPlanning(); renderTemplates(); renderNotifications();
+      loadNotificationsFromBackend();
       showView(state.user === 'Supervisore 2EMME' ? 'supervisor' : 'home');
     }
 
@@ -1074,6 +1078,45 @@ async function twoEmmeApiPost(payload) {
       });
     }
 
+    function reminderIsForCurrentUser(reminder){
+      const dest = String(reminder.Destinatario || reminder.destinatario || reminder.to || '').toLowerCase();
+      const user = String(state.user || '').toLowerCase();
+      const stato = String(reminder.Stato || reminder.stato || '').toLowerCase();
+      if(['letto','chiuso','completato'].includes(stato)) return false;
+      if(!dest || dest === 'tutti' || dest === 'all') return true;
+      return dest.split(/[;,]/).map(x => x.trim()).filter(Boolean).some(x => x === user || x.includes(user) || user.includes(x));
+    }
+
+    async function loadNotificationsFromBackend(){
+      const box = document.getElementById('notifications-list');
+      if(box){
+        box.innerHTML = '<div class="bg-white rounded-[2rem] p-5 border border-slate-100 text-slate-500 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Aggiorno notifiche...</div>';
+      }
+      try{
+        let reminders = [];
+        const mobileData = await twoEmmeApiGet('mobile', { user: state.user });
+        if(mobileData && Array.isArray(mobileData.reminderAddetti)) reminders = reminders.concat(mobileData.reminderAddetti);
+
+        // Fallback necessario: il backend attuale filtra solo destinatario esatto;
+        // qui leggiamo la tabella completa e gestiamo destinatari multipli separati da ; o ,.
+        const sheetData = await twoEmmeApiGet('sheet', { sheet: 'ReminderAddetti' });
+        if(sheetData && Array.isArray(sheetData.rows)) reminders = reminders.concat(sheetData.rows.filter(reminderIsForCurrentUser));
+
+        const unique = new Map();
+        reminders.forEach(r => {
+          const id = r.ReminderId || r.reminderId || [r.DataCreazione, r.Titolo, r.Messaggio].join('|');
+          if(id) unique.set(String(id), r);
+        });
+        state.reminderAddetti = Array.from(unique.values());
+        saveState();
+        renderNotifications();
+      } catch(err){
+        console.warn('Errore caricamento notifiche', err);
+        renderNotifications();
+        toast('Notifiche non aggiornate: controllo connessione/backend');
+      }
+    }
+
     function renderNotifications(){
       const box = document.getElementById('notifications-list');
       if(!box) return;
@@ -1238,6 +1281,7 @@ async function twoEmmeApiPost(payload) {
         const nav = document.getElementById('nav-'+v);
         if(nav) nav.className = `nav-btn rounded-2xl py-2 text-xs ${v===view ? 'font-black text-sky-600 bg-sky-50' : 'font-bold text-slate-400'}`;
       });
+      if(view === 'notifications') loadNotificationsFromBackend();
     }
 
     function openDamageReport(){ document.getElementById('damage-modal').classList.remove('hidden'); }
