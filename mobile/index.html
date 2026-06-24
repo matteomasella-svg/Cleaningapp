@@ -196,21 +196,38 @@ async function twoEmmeApiPost(payload) {
         <div id="checklist-container" class="space-y-4"></div>
 
         <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3">
-          <h3 class="font-black flex items-center gap-2"><i class="fa-solid fa-images text-sky-500"></i> Foto intervento</h3>
-          <div class="grid grid-cols-2 gap-3">
-            <label class="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center text-xs font-bold text-slate-500 active:scale-[0.98]">
-              <i class="fa-solid fa-camera text-xl block mb-1"></i> Prima
-              <input type="file" accept="image/*" capture="environment" class="hidden" onchange="previewPhoto(event, 'before-preview')">
+          <h3 class="font-black flex items-center gap-2"><i class="fa-solid fa-images text-sky-500"></i> Foto obbligatorie intervento</h3>
+          <p class="text-xs text-slate-500 font-semibold">Obbligatorie: 1 foto a inizio checklist + 4 foto finali per sala/soggiorno, cucina, zona notte e bagno.</p>
+          <div class="grid grid-cols-1 gap-3">
+            <label class="border-2 border-dashed border-sky-200 bg-sky-50 rounded-2xl p-4 text-center text-xs font-black text-sky-700 active:scale-[0.98]">
+              <i class="fa-solid fa-camera text-xl block mb-1"></i> 01 - Inizio checklist / stato generale
+              <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleInterventionPhoto(event, 'inizio_generale')">
             </label>
-            <label class="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center text-xs font-bold text-slate-500 active:scale-[0.98]">
-              <i class="fa-solid fa-camera-retro text-xl block mb-1"></i> Dopo
-              <input type="file" accept="image/*" capture="environment" class="hidden" onchange="previewPhoto(event, 'after-preview')">
-            </label>
+            <div id="photo-preview-inizio_generale" class="min-h-16 rounded-2xl bg-slate-50 overflow-hidden"></div>
           </div>
           <div class="grid grid-cols-2 gap-3">
-            <div id="before-preview" class="min-h-20 rounded-2xl bg-slate-50 overflow-hidden"></div>
-            <div id="after-preview" class="min-h-20 rounded-2xl bg-slate-50 overflow-hidden"></div>
+            <label class="border-2 border-dashed border-slate-200 rounded-2xl p-3 text-center text-[11px] font-bold text-slate-500 active:scale-[0.98]">
+              <i class="fa-solid fa-couch text-lg block mb-1"></i> 02 - Fine sala/soggiorno
+              <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleInterventionPhoto(event, 'fine_sala_soggiorno')">
+            </label>
+            <label class="border-2 border-dashed border-slate-200 rounded-2xl p-3 text-center text-[11px] font-bold text-slate-500 active:scale-[0.98]">
+              <i class="fa-solid fa-kitchen-set text-lg block mb-1"></i> 03 - Fine cucina
+              <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleInterventionPhoto(event, 'fine_cucina')">
+            </label>
+            <div id="photo-preview-fine_sala_soggiorno" class="min-h-16 rounded-2xl bg-slate-50 overflow-hidden"></div>
+            <div id="photo-preview-fine_cucina" class="min-h-16 rounded-2xl bg-slate-50 overflow-hidden"></div>
+            <label class="border-2 border-dashed border-slate-200 rounded-2xl p-3 text-center text-[11px] font-bold text-slate-500 active:scale-[0.98]">
+              <i class="fa-solid fa-bed text-lg block mb-1"></i> 04 - Fine zona notte
+              <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleInterventionPhoto(event, 'fine_zona_notte')">
+            </label>
+            <label class="border-2 border-dashed border-slate-200 rounded-2xl p-3 text-center text-[11px] font-bold text-slate-500 active:scale-[0.98]">
+              <i class="fa-solid fa-bath text-lg block mb-1"></i> 05 - Fine bagno
+              <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleInterventionPhoto(event, 'fine_bagno')">
+            </label>
+            <div id="photo-preview-fine_zona_notte" class="min-h-16 rounded-2xl bg-slate-50 overflow-hidden"></div>
+            <div id="photo-preview-fine_bagno" class="min-h-16 rounded-2xl bg-slate-50 overflow-hidden"></div>
           </div>
+          <div id="photo-required-hint" class="rounded-2xl bg-amber-50 border border-amber-100 p-3 text-xs font-bold text-amber-800">Carica tutte le 5 foto obbligatorie prima di chiudere.</div>
           <textarea id="final-notes" rows="3" placeholder="Note finali, anomalie, materiali mancanti..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-sm outline-none focus:ring-2 focus:ring-sky-400"></textarea>
           <button id="complete-btn" onclick="completeShift()" disabled class="w-full rounded-2xl bg-slate-200 text-slate-400 py-3.5 font-black">
             Completa intervento
@@ -382,7 +399,8 @@ async function twoEmmeApiPost(payload) {
         <textarea id="damage-note" rows="3" placeholder="Descrizione" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 outline-none"></textarea>
         <label class="block border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center text-sm font-bold text-slate-500">
           <i class="fa-solid fa-camera block text-xl mb-1"></i> Aggiungi foto
-          <input type="file" accept="image/*" capture="environment" class="hidden">
+          <input id="damage-photo-input" type="file" accept="image/*" capture="environment" class="hidden" onchange="handleDamagePhoto(event)">
+          <div id="damage-photo-preview" class="mt-3 min-h-16 rounded-2xl bg-slate-50 overflow-hidden"></div>
         </label>
         <button onclick="saveDamageReport()" class="w-full bg-rose-500 text-white rounded-2xl py-3.5 font-black">Salva segnalazione</button>
       </div>
@@ -394,7 +412,7 @@ async function twoEmmeApiPost(payload) {
     <!-- FOOTER COPYRIGHT -->
     <footer class="px-4 py-6 text-center text-[10px] text-slate-400 bg-slate-50">
       <strong>© 2026 2EMME RE & Consulting</strong><br>
-      2EMME Cleaning™ - Mobile Housekeeping Platform - v10 Notifiche Addetti<br>
+      2EMME Cleaning™ - Mobile Housekeeping Platform - v11 Foto Interventi<br>
       Housekeeping • Inventory • Safety • Compliance - Tutti i diritti riservati.
     </footer>
   </div>
@@ -575,6 +593,8 @@ async function twoEmmeApiPost(payload) {
     state.scorteAlloggi = state.scorteAlloggi || [];
     state.inventarioCasaAlloggi = state.inventarioCasaAlloggi || [];
     state.mobileInventoryDrafts = state.mobileInventoryDrafts || {};
+    state.interventionPhotos = state.interventionPhotos || {};
+    state.damageDraftPhoto = state.damageDraftPhoto || null;
     state.reminderAddetti = state.reminderAddetti || [
       { date:'2026-06-23T09:00:00+02:00', priority:'Alta', title:'Reintegro Chávez', message:'Reintegrare: caffè Illy, zucchero, carta igienica, sapone mani, shampoo, sacchetti pattumiera, detersivo lavatrice, detersivo pavimenti, desincrostante, sapone piatti e batterie telecomandi.' },
       { date:'2026-06-23T09:05:00+02:00', priority:'Alta', title:'Biancheria Chávez', message:'Mancano lenzuola sopra e almeno un set asciugamani completo. Verificare prima del prossimo check-in.' },
@@ -659,7 +679,9 @@ async function twoEmmeApiPost(payload) {
       document.getElementById('active-apartment').textContent = currentShift.apartment;
       document.getElementById('active-meta').textContent = `${formatDate(currentShift.date)} • ${currentShift.time} • Ospite: ${currentShift.guestName || 'Da associare'} • Prenotazione: ${currentShift.bookingCode || 'Da associare'} • ${currentShift.guests} ospiti • ${currentShift.nights} notti • Legionella: ${currentShift.requiresLegionella ? 'prevista' : 'non prevista'}`;
       renderTeamExecutionPanel();
-      renderChecklist(); showView('checklist');
+      renderChecklist();
+      setTimeout(renderInterventionPhotoPreviews, 0);
+      showView('checklist');
     }
 
     function shiftCleaners(shift){
@@ -946,6 +968,7 @@ async function twoEmmeApiPost(payload) {
       const done = rows.filter(rowIsCompleted).length;
       const missingFlags = rows.filter(row => row.dataset.stockRow !== '1' && row.querySelector('.issue-toggle')?.checked && row.querySelectorAll('.issue-flag:checked').length === 0).length;
       const otherMode = checklistExecutionMode === 'performed_by_other_operator';
+      const missingPhotos = missingRequiredPhotos ? missingRequiredPhotos() : [];
       const pct = otherMode ? 100 : (rows.length ? Math.round(done/rows.length*100) : 0);
       document.getElementById('progress-text').textContent = otherMode ? 'Altro addetto' : pct + '%';
       document.getElementById('progress-bar').style.width = pct + '%';
@@ -961,8 +984,76 @@ async function twoEmmeApiPost(payload) {
       }
       const btn = document.getElementById('complete-btn');
       if(otherMode && checklistPerformedBy){ btn.disabled=false; btn.className='w-full rounded-2xl bg-indigo-600 text-white py-3.5 font-black shadow-lg shadow-indigo-100'; btn.textContent='Chiudi come effettuata da altro addetto'; return; }
+      if(missingPhotos.length){ btn.disabled=true; btn.className='w-full rounded-2xl bg-slate-200 text-slate-400 py-3.5 font-black'; btn.textContent='Carica le 5 foto obbligatorie'; return; }
       if(rows.length && done === rows.length && missingFlags === 0){ btn.disabled=false; btn.className='w-full rounded-2xl bg-emerald-500 text-white py-3.5 font-black shadow-lg shadow-emerald-100'; btn.textContent='Completa intervento'; }
       else { btn.disabled=true; btn.className='w-full rounded-2xl bg-slate-200 text-slate-400 py-3.5 font-black'; btn.textContent='Completa tutte le verifiche obbligatorie'; }
+    }
+
+    function currentPhotoStorageKey(){ return currentShift ? `${currentShift.id}|${state.user || ''}` : 'no-shift'; }
+    function currentPhotoSet(){ const k=currentPhotoStorageKey(); state.interventionPhotos[k]=state.interventionPhotos[k] || {}; return state.interventionPhotos[k]; }
+    const requiredPhotoSlots = ['inizio_generale','fine_sala_soggiorno','fine_cucina','fine_zona_notte','fine_bagno'];
+    const photoLabels = { inizio_generale:'Inizio generale', fine_sala_soggiorno:'Fine sala/soggiorno', fine_cucina:'Fine cucina', fine_zona_notte:'Fine zona notte', fine_bagno:'Fine bagno' };
+    const photoAmbienti = { inizio_generale:'GENERALE', fine_sala_soggiorno:'SALA_SOGGIORNO', fine_cucina:'CUCINA', fine_zona_notte:'ZONA_NOTTE', fine_bagno:'BAGNO' };
+
+    function resizeImageFile(file, maxSize=1280, quality=0.68){
+      return new Promise((resolve, reject)=>{
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = () => {
+          const img = new Image();
+          img.onerror = reject;
+          img.onload = () => {
+            const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(img.width * scale));
+            canvas.height = Math.max(1, Math.round(img.height * scale));
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleInterventionPhoto(e, slot){
+      const file = e.target.files[0]; if(!file) return;
+      toast('Ottimizzazione foto...');
+      const dataUrl = await resizeImageFile(file);
+      const photos = currentPhotoSet();
+      photos[slot] = { slot, label: photoLabels[slot] || slot, ambiente: photoAmbienti[slot] || slot, originalName: file.name || '', dataUrl };
+      saveState();
+      renderInterventionPhotoPreviews();
+      updateProgress();
+      toast('Foto salvata per invio');
+    }
+
+    function renderInterventionPhotoPreviews(){
+      const photos = currentShift ? currentPhotoSet() : {};
+      requiredPhotoSlots.forEach(slot=>{
+        const el = document.getElementById('photo-preview-'+slot);
+        if(!el) return;
+        const p = photos[slot];
+        el.innerHTML = p && p.dataUrl ? `<img src="${p.dataUrl}" class="h-28 w-full object-cover rounded-2xl"><div class="text-[10px] font-black text-emerald-700 mt-1">${photoLabels[slot]} caricata</div>` : `<div class="h-16 flex items-center justify-center text-[11px] text-slate-400 font-bold">Foto mancante</div>`;
+      });
+      const hint = document.getElementById('photo-required-hint');
+      if(hint){
+        const missing = missingRequiredPhotos();
+        hint.textContent = missing.length ? `Mancano foto: ${missing.map(s=>photoLabels[s]).join(', ')}` : 'Tutte le foto obbligatorie sono presenti.';
+        hint.className = 'rounded-2xl p-3 text-xs font-bold ' + (missing.length ? 'bg-amber-50 border border-amber-100 text-amber-800' : 'bg-emerald-50 border border-emerald-100 text-emerald-800');
+      }
+    }
+
+    function missingRequiredPhotos(){
+      if(!currentShift) return requiredPhotoSlots;
+      const photos = currentPhotoSet();
+      return requiredPhotoSlots.filter(slot => !photos[slot] || !photos[slot].dataUrl);
+    }
+
+    function buildPhotoPayload(){
+      const photos = currentPhotoSet();
+      return requiredPhotoSlots.map(slot => photos[slot]).filter(Boolean).map(p => ({ slot:p.slot, label:p.label, ambiente:p.ambiente, originalName:p.originalName, dataUrl:p.dataUrl }));
     }
 
     function previewPhoto(e, targetId){
@@ -974,6 +1065,8 @@ async function twoEmmeApiPost(payload) {
 
     async function completeShift(){
       if(!currentShift) return;
+      const missingPhotosBeforeClose = missingRequiredPhotos();
+      if(missingPhotosBeforeClose.length){ toast('Mancano foto obbligatorie: ' + missingPhotosBeforeClose.map(s=>photoLabels[s]).join(', ')); return; }
       const performedByOther = checklistExecutionMode === 'performed_by_other_operator';
       const stockShortages = performedByOther ? [] : collectStockShortages();
       const checklistIssues = performedByOther ? [] : collectChecklistIssues();
@@ -1007,7 +1100,8 @@ async function twoEmmeApiPost(payload) {
         requiredStockChecked: !performedByOther,
         legionellaRequired: !!currentShift.requiresLegionella,
         legionellaCompleted: !!currentShift.requiresLegionella && !performedByOther,
-        needsCompilerLog: performedByOther
+        needsCompilerLog: performedByOther,
+        fotoIntervento: buildPhotoPayload().map(p => ({ slot:p.slot, label:p.label, ambiente:p.ambiente }))
       });
       if(currentShift.requiresLegionella && !performedByOther){
         const legionellaIssues = checklistIssues.filter(i => (i.phase || '').toLowerCase().includes('legionella') || (i.text || '').toLowerCase().includes('flussaggio') || (i.text || '').toLowerCase().includes('rompigetto'));
@@ -1041,7 +1135,10 @@ async function twoEmmeApiPost(payload) {
             LegionellaPrevista: !!currentShift.requiresLegionella,
             LegionellaCompletata: performedByOther ? false : !!currentShift.requiresLegionella,
             NumeroSegnalazioni: checklistIssues.length,
-            stockShortages: stockShortages
+            stockShortages: stockShortages,
+            NumeroPrenotazione: currentShift.bookingCode || currentShift.bookingId || '',
+            bookingCode: currentShift.bookingCode || currentShift.bookingId || '',
+            FotoIntervento: buildPhotoPayload()
           };
           const apiResult = await twoEmmeApiPost(payload);
           if (!apiResult || apiResult.success === false) {
@@ -1508,12 +1605,46 @@ async function twoEmmeApiPost(payload) {
       if(view === 'notifications') loadNotificationsFromBackend();
     }
 
-    function openDamageReport(){ document.getElementById('damage-modal').classList.remove('hidden'); }
+    function openDamageReport(){
+      state.damageDraftPhoto = null;
+      const preview = document.getElementById('damage-photo-preview'); if(preview) preview.innerHTML='';
+      document.getElementById('damage-modal').classList.remove('hidden');
+    }
     function closeDamageReport(){ document.getElementById('damage-modal').classList.add('hidden'); }
-    function saveDamageReport(){
+    async function handleDamagePhoto(e){
+      const file = e.target.files[0]; if(!file) return;
+      toast('Ottimizzazione foto segnalazione...');
+      const dataUrl = await resizeImageFile(file);
+      state.damageDraftPhoto = { slot:'segnalazione', ambiente:'SEGNALAZIONE', originalName:file.name || '', dataUrl };
+      saveState();
+      const preview = document.getElementById('damage-photo-preview');
+      if(preview) preview.innerHTML = `<img src="${dataUrl}" class="h-28 w-full object-cover rounded-2xl"><div class="text-[10px] font-black text-emerald-700 mt-1">Foto segnalazione caricata</div>`;
+      toast('Foto segnalazione pronta');
+    }
+    async function saveDamageReport(){
       const title = document.getElementById('damage-title').value.trim();
       if(!title){ toast('Inserisci il titolo del danno'); return; }
-      state.issues.unshift({ title, note: document.getElementById('damage-note').value, date: new Date().toISOString(), user: state.user });
+      const note = document.getElementById('damage-note').value;
+      const issue = { title, note, date: new Date().toISOString(), user: state.user, apartment: currentShift?.apartment || '', shiftId: currentShift?.id || '', photoAttached: !!state.damageDraftPhoto };
+      state.issues.unshift(issue);
+      try{
+        if(typeof twoEmmeApiPost === 'function'){
+          await twoEmmeApiPost({
+            action:'saveSegnalazione',
+            TurnoId: currentShift?.id || '',
+            Alloggio: currentShift?.apartment || '',
+            Operatore: state.user,
+            Categoria: title,
+            Descrizione: note,
+            Ambiente: '',
+            Priorita:'Media',
+            Stato:'Aperta',
+            NumeroPrenotazione: currentShift?.bookingCode || '',
+            FotoSegnalazione: state.damageDraftPhoto ? [state.damageDraftPhoto] : []
+          });
+        }
+      }catch(err){ console.warn('Segnalazione salvata localmente ma non inviata al backend', err); }
+      state.damageDraftPhoto = null;
       saveState(); renderSupervisor(); closeDamageReport(); toast('Segnalazione salvata');
     }
     function formatDate(d){ return new Date(d+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit', month:'2-digit'}); }
