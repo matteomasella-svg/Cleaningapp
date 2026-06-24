@@ -227,6 +227,16 @@ async function twoEmmeApiPost(payload) {
         <div id="inventory-list" class="space-y-3"></div>
       </section>
 
+      <!-- NOTIFICATIONS -->
+      <section id="view-notifications" class="hidden p-4 space-y-4">
+        <div class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
+          <p class="text-[11px] uppercase tracking-wider font-black text-sky-600">Comunicazioni operative</p>
+          <h2 class="text-xl font-black">Notifiche</h2>
+          <p class="text-xs text-slate-500 mt-1">Reminder amministratore, reintegri Magazzino Bassano e avvisi compliance. Questa sezione sostituisce definitivamente Help.</p>
+        </div>
+        <div id="notifications-list" class="space-y-3"></div>
+      </section>
+
       <!-- SUPERVISOR / ADMIN DASHBOARD -->
       <section id="view-supervisor" class="hidden p-4 space-y-4">
         <div class="rounded-[2rem] bg-gradient-to-br from-emme to-slate-800 text-white p-5 shadow-lg">
@@ -381,7 +391,7 @@ async function twoEmmeApiPost(payload) {
     <!-- FOOTER COPYRIGHT -->
     <footer class="px-4 py-6 text-center text-[10px] text-slate-400 bg-slate-50">
       <strong>© 2026 2EMME RE & Consulting</strong><br>
-      2EMME Cleaning™ - Mobile Housekeeping Platform - v10 Team Checklist Selector<br>
+      2EMME Cleaning™ - Mobile Housekeeping Platform - v10 Notifiche Addetti<br>
       Housekeeping • Inventory • Safety • Compliance - Tutti i diritti riservati.
     </footer>
   </div>
@@ -559,6 +569,11 @@ async function twoEmmeApiPost(payload) {
     state.magazzinoBassano = state.magazzinoBassano || {...warehouseDefaults};
     state.movimentiMagazzino = state.movimentiMagazzino || [];
     state.stockReplenishmentNotifications = state.stockReplenishmentNotifications || [];
+    state.reminderAddetti = state.reminderAddetti || [
+      { date:'2026-06-23T09:00:00+02:00', priority:'Alta', title:'Reintegro Chávez', message:'Reintegrare: caffè Illy, zucchero, carta igienica, sapone mani, shampoo, sacchetti pattumiera, detersivo lavatrice, detersivo pavimenti, desincrostante, sapone piatti e batterie telecomandi.' },
+      { date:'2026-06-23T09:05:00+02:00', priority:'Alta', title:'Biancheria Chávez', message:'Mancano lenzuola sopra e almeno un set asciugamani completo. Verificare prima del prossimo check-in.' },
+      { date:'2026-06-23T09:10:00+02:00', priority:'Importante', title:'Kit pronto soccorso Allegato 2', message:'Verificare presenza, integrità, accessibilità e scadenze del kit pronto soccorso D.M. 388/2003 Allegato 2 in ogni alloggio.' }
+    ];
     let currentShift = null;
 
     function saveState(){ localStorage.setItem('emmeCleaningState', JSON.stringify(state)); }
@@ -1090,9 +1105,9 @@ async function twoEmmeApiPost(payload) {
         ['legionella','fa-bacteria','Legionella']
       ] : [
         ['home','fa-house','Home'],
-        ['checklist','fa-list-check','Checklist'],
         ['inventory','fa-boxes-stacked','Scorte'],
-        ['notifications','fa-bell','Notifiche']
+        ['notifications','fa-bell','Notifiche'],
+        ['logs','fa-clipboard-list','Log']
       ];
       nav.className = items.length === 5 ? 'grid grid-cols-5 px-2 py-2' : 'grid grid-cols-4 px-2 py-2';
       nav.innerHTML = items.map(([view, icon, label]) => `<button onclick="showView('${view}')" id="nav-${view}" class="nav-btn rounded-2xl py-2 text-xs font-bold text-slate-400"><i class="fa-solid ${icon} block text-lg mb-0.5"></i>${label}</button>`).join('');
@@ -1217,7 +1232,7 @@ async function twoEmmeApiPost(payload) {
     }
 
     function showView(view){
-      ['home','checklist','inventory','supervisor','planning','templates','logs'].forEach(v=>{
+      ['home','checklist','inventory','notifications','supervisor','planning','templates','smoobu','legionella','logs'].forEach(v=>{
         const section = document.getElementById('view-'+v);
         if(section) section.classList.toggle('hidden', v!==view);
         const nav = document.getElementById('nav-'+v);
