@@ -60,7 +60,7 @@ window.TWO_EMME_CLEANING_CONFIG = {
   BACKEND_URL: "https://script.google.com/macros/s/AKfycbwnXtCVV8BD_5xiItJqZ1YjKqTZCzqvUds2r_tzNVZeWqIJBRERcZtn2mZJKkgmdMHq/exec",
   GOOGLE_SHEET_ID: "1chEViDrAke793wJZIILx_NVrnheOgRZSTAE6X0CBTFw",
   GOOGLE_SHEET_URL: "https://docs.google.com/spreadsheets/d/1chEViDrAke793wJZIILx_NVrnheOgRZSTAE6X0CBTFw/edit",
-  VERSION: "mobile-v10"
+  VERSION: "mobile-v11-editable-inventory"
 };
 
 async function twoEmmeApiGet(action, params = {}) {
@@ -572,12 +572,17 @@ async function twoEmmeApiPost(payload) {
     state.magazzinoBassano = state.magazzinoBassano || {...warehouseDefaults};
     state.movimentiMagazzino = state.movimentiMagazzino || [];
     state.stockReplenishmentNotifications = state.stockReplenishmentNotifications || [];
+    state.scorteAlloggi = state.scorteAlloggi || [];
+    state.inventarioCasaAlloggi = state.inventarioCasaAlloggi || [];
+    state.mobileInventoryDrafts = state.mobileInventoryDrafts || {};
     state.reminderAddetti = state.reminderAddetti || [
       { date:'2026-06-23T09:00:00+02:00', priority:'Alta', title:'Reintegro Chávez', message:'Reintegrare: caffè Illy, zucchero, carta igienica, sapone mani, shampoo, sacchetti pattumiera, detersivo lavatrice, detersivo pavimenti, desincrostante, sapone piatti e batterie telecomandi.' },
       { date:'2026-06-23T09:05:00+02:00', priority:'Alta', title:'Biancheria Chávez', message:'Mancano lenzuola sopra e almeno un set asciugamani completo. Verificare prima del prossimo check-in.' },
       { date:'2026-06-23T09:10:00+02:00', priority:'Importante', title:'Kit pronto soccorso Allegato 2', message:'Verificare presenza, integrità, accessibilità e scadenze del kit pronto soccorso D.M. 388/2003 Allegato 2 in ogni alloggio.' }
     ];
     let currentShift = null;
+    let checklistExecutionMode = 'compiled_by_me';
+    let checklistPerformedBy = '';
 
     function saveState(){ localStorage.setItem('emmeCleaningState', JSON.stringify(state)); }
     function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'), 2600); }
@@ -620,6 +625,7 @@ async function twoEmmeApiPost(payload) {
       document.getElementById('whatsapp-link').href = 'https://wa.me/393330000000?text=' + encodeURIComponent('Ciao, ti contatto da 2EMME Cleaning.');
       setupRoleNavigation(); renderShifts(); renderInventory(); renderSupervisor(); renderPlanning(); renderTemplates(); renderNotifications();
       loadNotificationsFromBackend();
+      loadInventoryFromBackend();
       showView(state.user === 'Supervisore 2EMME' ? 'supervisor' : 'home');
     }
 
@@ -923,8 +929,11 @@ async function twoEmmeApiPost(payload) {
     }
 
     function rowIsCompleted(row){
+      // HOTFIX: le righe scorte non devono bloccare la chiusura dell'intervento.
+      // Se l'addetta inserisce quantità, vengono registrate mancanze/reintegri.
+      // Se le lascia vuote, l'intervento può comunque essere chiuso.
       if(row.dataset.stockRow === '1'){
-        return row.querySelector('.stock-present')?.value !== '';
+        return true;
       }
       const ok = row.querySelector('.task')?.checked;
       const issue = row.querySelector('.issue-toggle')?.checked;
@@ -947,7 +956,7 @@ async function twoEmmeApiPost(payload) {
           ? `Modalità team: questa chiusura sarà registrata come effettuata da altro addetto (${checklistPerformedBy || 'da selezionare'}). La compilazione completa deve risultare nel log della collega.`
           : (missingFlags
             ? `Ci sono ${missingFlags} segnalazioni senza flag: scegli almeno un motivo per ciascuna.`
-            : (remaining ? `Mancano ${remaining} verifiche obbligatorie. Scorte staff, scorte ospiti e checklist previste sono necessarie per chiudere.` : 'Tutte le verifiche obbligatorie sono completate. Puoi chiudere l intervento.'));
+            : (remaining ? `Mancano ${remaining} verifiche obbligatorie di checklist. Le scorte non bloccano la chiusura: se compili le quantità, vengono registrati eventuali reintegri.` : 'Tutte le verifiche obbligatorie sono completate. Puoi chiudere l intervento.'));
         hint.className = 'mt-2 text-[11px] leading-snug font-semibold ' + (otherMode || (!remaining && !missingFlags) ? 'text-emerald-700' : 'text-amber-700');
       }
       const btn = document.getElementById('complete-btn');
@@ -963,7 +972,7 @@ async function twoEmmeApiPost(payload) {
       reader.readAsDataURL(file);
     }
 
-    function completeShift(){
+    async function completeShift(){
       if(!currentShift) return;
       const performedByOther = checklistExecutionMode === 'performed_by_other_operator';
       const stockShortages = performedByOther ? [] : collectStockShortages();
@@ -1017,6 +1026,31 @@ async function twoEmmeApiPost(payload) {
           procedure: 'Flussaggio acqua calda 5 minuti + controllo/igiene terminali se previsto + segnalazione anomalie'
         });
       }
+      try {
+        if (typeof twoEmmeApiPost === 'function') {
+          const payload = {
+            action: 'completeIntervention',
+            TurnoId: currentShift.id,
+            Alloggio: currentShift.apartment,
+            Operatore: state.user,
+            ChecklistExecutionMode: performedByOther ? 'Effettuata da altro addetto' : 'Compilata da me',
+            ChecklistCompiledBy: performedByOther ? checklistPerformedBy : state.user,
+            ChecklistConfirmedBy: performedByOther ? state.user : '',
+            TeamShift: isTeamShift(currentShift),
+            NeedsCompilerLog: performedByOther,
+            LegionellaPrevista: !!currentShift.requiresLegionella,
+            LegionellaCompletata: performedByOther ? false : !!currentShift.requiresLegionella,
+            NumeroSegnalazioni: checklistIssues.length,
+            stockShortages: stockShortages
+          };
+          const apiResult = await twoEmmeApiPost(payload);
+          if (!apiResult || apiResult.success === false) {
+            console.warn('Salvataggio backend non confermato', apiResult);
+          }
+        }
+      } catch (err) {
+        console.warn('Intervento salvato localmente ma non inviato al backend', err);
+      }
       saveState();
       renderShifts();
       renderInventory();
@@ -1048,34 +1082,224 @@ async function twoEmmeApiPost(payload) {
       return Object.values(stockStandards).flat();
     }
 
-    function renderInventory(){
-      const box = document.getElementById('inventory-list'); box.innerHTML = '';
-      const latestNotifications = state.stockReplenishmentNotifications.slice(0,5);
-      if(latestNotifications.length){
-        box.innerHTML += `<section class="bg-orange-50 rounded-[2rem] p-4 border border-orange-100 shadow-sm">
-          <h3 class="font-black text-orange-900 mb-2"><i class="fa-solid fa-bell mr-2"></i>Notifiche reintegro</h3>
-          <div class="space-y-2">${latestNotifications.map(n=>`<div class="bg-white/80 border border-orange-100 rounded-2xl p-3 text-xs font-bold text-orange-900">${escapeHtml(n.message)}<br><span class="text-orange-600">${new Date(n.date).toLocaleString('it-IT')}</span></div>`).join('')}</div>
-        </section>`;
-      }
-      inventoryGroups.forEach((g)=>{
-        if(g.warehouse){
-          const allItems = stockItemsForGroup(g);
-          box.innerHTML += `<section class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
-            <h3 class="font-black mb-1"><i class="fa-solid fa-warehouse text-amber-600 mr-2"></i>Magazzino Bassano</h3>
-            <p class="text-[11px] text-slate-500 font-semibold mb-3">Giacenze generali. Quando manca un prodotto in appartamento, viene creato uno scarico automatico dal magazzino.</p>
-            <div class="space-y-2">${allItems.map(item=>`<div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50"><span class="text-sm font-medium">${escapeHtml(item.name)}</span><span class="text-[11px] font-black text-slate-700">${Number(state.magazzinoBassano[item.sku] || 0)} ${escapeHtml(item.unit)}</span></div>`).join('')}</div>
-            <h4 class="font-black text-sm mt-4 mb-2">Ultimi movimenti</h4>
-            <div class="space-y-2">${state.movimentiMagazzino.slice(0,8).map(m=>`<div class="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-xs"><b>${escapeHtml(m.type)} ${escapeHtml(m.item)}</b><br>${escapeHtml(m.quantity)} ${escapeHtml(m.unit)} → ${escapeHtml(m.apartment)}<br><span class="text-slate-500">${new Date(m.date).toLocaleString('it-IT')} • ${escapeHtml(m.operator)}</span></div>`).join('') || '<p class="text-xs text-slate-400">Nessun movimento registrato.</p>'}</div>
-          </section>`;
-          return;
-        }
-        const items = stockItemsForGroup(g);
-        box.innerHTML += `<section class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm">
-          <h3 class="font-black mb-1">${escapeHtml(g.title)}</h3>
-          <p class="text-[11px] text-slate-500 font-semibold mb-3">Queste sono scorte dell'appartamento. La quantità mancante genera notifica e scarico dal Magazzino Bassano.</p>
-          <div class="space-y-2">${items.map(item=>`<div class="flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50"><span class="text-sm font-medium">${escapeHtml(item.name)}</span><span class="text-[10px] font-black text-amber-700 bg-amber-50 px-2 py-1 rounded-full border border-amber-100">STD ${item.standard} ${escapeHtml(item.unit)}</span></div>`).join('')}</div>
-        </section>`;
+    function currentInventoryApartment(){
+      return state.inventoryApartment || (currentShift && currentShift.apartment) || 'The NoLo Studio';
+    }
+
+    function normalizeKey(value){ return String(value || '').trim().toLowerCase(); }
+
+    function rowMatchesApartment(row, apartment){
+      if(!apartment || apartment === 'Tutti') return true;
+      return normalizeKey(row.Alloggio || row.alloggio) === normalizeKey(apartment);
+    }
+
+    function getApartmentStockRows(apartment){
+      const rows = Array.isArray(state.scorteAlloggi) ? state.scorteAlloggi : [];
+      const map = new Map();
+      rows.filter(r => rowMatchesApartment(r, apartment)).forEach(r => {
+        const key = String(r.SKU || r.sku || r.Articolo || r.articolo || '').trim();
+        if(key) map.set(key, r);
       });
+      return map;
+    }
+
+    function getInventoryRows(apartment){
+      return (Array.isArray(state.inventarioCasaAlloggi) ? state.inventarioCasaAlloggi : []).filter(r => rowMatchesApartment(r, apartment));
+    }
+
+    function stockValue(row, key, fallback){
+      return row && row[key] !== undefined && row[key] !== '' ? row[key] : fallback;
+    }
+
+    function renderEditableStockRow(item, phaseTitle, apartment, existing){
+      const id = 'mob-st-' + String(item.sku).replace(/[^a-zA-Z0-9_-]/g, '_');
+      const standard = Number(stockValue(existing, 'QuantitaStandard', item.standard) || item.standard || 0);
+      const present = stockValue(existing, 'QuantitaPresenteUltimoControllo', '');
+      const missing = present === '' ? '' : Math.max(standard - Number(present || 0), 0);
+      const stato = stockValue(existing, 'Stato', missing === '' ? '' : (missing > 0 ? 'Reintegro richiesto' : 'OK'));
+      return `<article class="bg-slate-50 border border-slate-100 rounded-2xl p-3 space-y-3" data-mobile-stock="1" data-sku="${escapeHtml(item.sku)}" data-phase="${escapeHtml(phaseTitle)}" data-name="${escapeHtml(item.name)}" data-unit="${escapeHtml(item.unit)}">
+        <div class="flex justify-between gap-2"><div><b class="text-sm">${escapeHtml(item.name)}</b><p class="text-[11px] text-slate-500 font-semibold">${escapeHtml(phaseTitle)} • ${escapeHtml(apartment)}</p></div><span id="${id}-status" class="text-[10px] font-black rounded-full px-2 py-1 ${Number(missing)>0 ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}">${escapeHtml(stato || 'Da compilare')}</span></div>
+        <div class="grid grid-cols-3 gap-2">
+          <label class="text-[10px] font-black text-slate-500 uppercase">Standard<input id="${id}-std" type="number" step="0.01" class="stock-input" value="${escapeHtml(standard)}" oninput="recalcMobileStock('${id}')"></label>
+          <label class="text-[10px] font-black text-slate-500 uppercase">Presente<input id="${id}-pres" type="number" step="0.01" class="stock-input" value="${escapeHtml(present)}" oninput="recalcMobileStock('${id}')"></label>
+          <label class="text-[10px] font-black text-slate-500 uppercase">Manca<input id="${id}-miss" readonly class="stock-input" value="${escapeHtml(missing)}"></label>
+        </div>
+        <button onclick="saveMobileStock('${id}')" class="w-full bg-sky-600 text-white rounded-2xl py-3 font-black"><i class="fa-solid fa-floppy-disk mr-1"></i>Salva quantità</button>
+      </article>`;
+    }
+
+    function renderEditableInventoryRow(row, index){
+      const id = 'mob-inv-' + index;
+      const std = Number(row.QuantitaStandard || 0);
+      const present = row.QuantitaPresente === undefined ? '' : row.QuantitaPresente;
+      const missing = present === '' ? '' : Math.max(std - Number(present || 0), 0);
+      const status = row.Stato || (missing === '' ? 'Da compilare' : (missing > 0 ? 'Da integrare' : 'Presente'));
+      return `<article class="bg-slate-50 border border-slate-100 rounded-2xl p-3 space-y-3" data-mobile-inventory="1" data-index="${index}">
+        <div class="flex justify-between gap-2"><div><b class="text-sm">${escapeHtml(row.Articolo || '')}</b><p class="text-[11px] text-slate-500 font-semibold">${escapeHtml(row.Categoria || '')} • ${escapeHtml(row.Alloggio || '')}</p></div><span id="${id}-status" class="text-[10px] font-black rounded-full px-2 py-1 ${Number(missing)>0 ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}">${escapeHtml(status)}</span></div>
+        <div class="grid grid-cols-3 gap-2">
+          <label class="text-[10px] font-black text-slate-500 uppercase">Standard<input id="${id}-std" type="number" step="0.01" class="stock-input" value="${escapeHtml(std)}" oninput="recalcMobileInventory('${id}')"></label>
+          <label class="text-[10px] font-black text-slate-500 uppercase">Presente<input id="${id}-pres" type="number" step="0.01" class="stock-input" value="${escapeHtml(present)}" oninput="recalcMobileInventory('${id}')"></label>
+          <label class="text-[10px] font-black text-slate-500 uppercase">Manca<input id="${id}-miss" readonly class="stock-input" value="${escapeHtml(missing)}"></label>
+        </div>
+        <input id="${id}-note" class="admin-input text-sm" placeholder="Note" value="${escapeHtml(row.Note || '')}">
+        <button onclick="saveMobileInventory('${id}', ${index})" class="w-full bg-sky-600 text-white rounded-2xl py-3 font-black"><i class="fa-solid fa-floppy-disk mr-1"></i>Salva inventario</button>
+      </article>`;
+    }
+
+    function renderInventory(){
+      const box = document.getElementById('inventory-list');
+      if(!box) return;
+      const apartment = currentInventoryApartment();
+      const apartments = Object.keys(PROPERTIES);
+      const stockRows = getApartmentStockRows(apartment);
+      const editableStocks = Object.entries(stockStandards).map(([phaseTitle, items]) => ({phaseTitle, items}));
+      const inventoryRows = getInventoryRows(apartment);
+      const latestNotifications = (state.stockReplenishmentNotifications || []).slice(0,3);
+      box.innerHTML = `
+        <section class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3">
+          <div class="flex items-start justify-between gap-3">
+            <div><h2 class="text-xl font-black">Inventario modificabile</h2><p class="text-xs text-slate-500 mt-1">Modifica i numeri direttamente da mobile. I campi Manca e Stato si calcolano automaticamente.</p></div>
+            <button onclick="loadInventoryFromBackend()" class="rounded-2xl bg-slate-900 text-white px-3 py-2 text-xs font-black"><i class="fa-solid fa-rotate mr-1"></i>Aggiorna</button>
+          </div>
+          <label class="admin-label">Alloggio da modificare</label>
+          <select id="mobile-inventory-apartment" class="admin-input" onchange="state.inventoryApartment=this.value; saveState(); renderInventory();">
+            ${apartments.map(a => `<option ${a===apartment?'selected':''}>${escapeHtml(a)}</option>`).join('')}
+          </select>
+        </section>
+        ${latestNotifications.length ? `<section class="bg-orange-50 rounded-[2rem] p-4 border border-orange-100 shadow-sm"><h3 class="font-black text-orange-900 mb-2"><i class="fa-solid fa-bell mr-2"></i>Notifiche reintegro</h3><div class="space-y-2">${latestNotifications.map(n=>`<div class="bg-white/80 border border-orange-100 rounded-2xl p-3 text-xs font-bold text-orange-900">${escapeHtml(n.message)}<br><span class="text-orange-600">${new Date(n.date).toLocaleString('it-IT')}</span></div>`).join('')}</div></section>` : ''}
+        <section class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3">
+          <h3 class="font-black"><i class="fa-solid fa-boxes-stacked text-sky-600 mr-2"></i>Scorte alloggio modificabili</h3>
+          <p class="text-[11px] text-slate-500 font-semibold">Questi numeri aggiornano ScorteAlloggi. Se il backend non risponde, restano salvati localmente e vengono mostrati comunque.</p>
+          ${editableStocks.map(group => `<div class="space-y-3"><h4 class="text-sm font-black text-slate-700 mt-3">${escapeHtml(group.phaseTitle)}</h4>${group.items.map(item => renderEditableStockRow(item, group.phaseTitle, apartment, stockRows.get(item.sku))).join('')}</div>`).join('')}
+        </section>
+        <section class="bg-white rounded-[2rem] p-4 border border-slate-100 shadow-sm space-y-3">
+          <h3 class="font-black"><i class="fa-solid fa-list-check text-emerald-600 mr-2"></i>Inventario casa modificabile</h3>
+          <p class="text-[11px] text-slate-500 font-semibold">Modifica quantità presenti e standard delle dotazioni casa.</p>
+          <div class="grid grid-cols-2 gap-2 bg-slate-50 border border-slate-100 rounded-2xl p-3">
+            <input id="new-inv-cat" class="admin-input text-sm" placeholder="Categoria">
+            <input id="new-inv-art" class="admin-input text-sm" placeholder="Articolo">
+            <input id="new-inv-std" type="number" step="0.01" class="admin-input text-sm" placeholder="Standard">
+            <input id="new-inv-pres" type="number" step="0.01" class="admin-input text-sm" placeholder="Presente">
+            <input id="new-inv-unit" class="admin-input text-sm" placeholder="Unita" value="pz">
+            <button onclick="addMobileInventoryItem()" class="bg-emerald-600 text-white rounded-2xl py-3 font-black"><i class="fa-solid fa-plus mr-1"></i>Aggiungi</button>
+          </div>
+          ${inventoryRows.length ? inventoryRows.map((row, idx) => renderEditableInventoryRow(row, idx)).join('') : '<div class="rounded-2xl bg-amber-50 border border-amber-100 p-3 text-xs font-bold text-amber-800">Nessun inventario casa caricato per questo alloggio. Premi Aggiorna oppure aggiungi una voce manualmente.</div>'}
+        </section>`;
+    }
+
+    function recalcMobileStock(id){
+      const std = Number(document.getElementById(id + '-std')?.value || 0);
+      const presEl = document.getElementById(id + '-pres');
+      const pres = presEl && presEl.value !== '' ? Number(presEl.value || 0) : null;
+      const missing = pres === null ? '' : Math.max(std - pres, 0);
+      const missEl = document.getElementById(id + '-miss');
+      if(missEl) missEl.value = missing;
+      const status = document.getElementById(id + '-status');
+      if(status){
+        status.textContent = missing === '' ? 'Da compilare' : (missing > 0 ? 'Reintegro richiesto' : 'OK');
+        status.className = 'text-[10px] font-black rounded-full px-2 py-1 ' + (Number(missing)>0 ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700');
+      }
+    }
+
+    function recalcMobileInventory(id){
+      const std = Number(document.getElementById(id + '-std')?.value || 0);
+      const presEl = document.getElementById(id + '-pres');
+      const pres = presEl && presEl.value !== '' ? Number(presEl.value || 0) : null;
+      const missing = pres === null ? '' : Math.max(std - pres, 0);
+      const missEl = document.getElementById(id + '-miss');
+      if(missEl) missEl.value = missing;
+      const status = document.getElementById(id + '-status');
+      if(status){
+        status.textContent = missing === '' ? 'Da compilare' : (missing > 0 ? 'Da integrare' : 'Presente');
+        status.className = 'text-[10px] font-black rounded-full px-2 py-1 ' + (Number(missing)>0 ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700');
+      }
+    }
+
+    async function saveMobileStock(id){
+      const stdInput = document.getElementById(id + '-std');
+      const row = stdInput ? stdInput.closest('[data-mobile-stock="1"]') : null;
+      if(!row) return;
+      const std = Number(document.getElementById(id + '-std')?.value || 0);
+      const pres = Number(document.getElementById(id + '-pres')?.value || 0);
+      const missing = Math.max(std - pres, 0);
+      const payload = { action:'upsertApartmentStock', Alloggio: currentInventoryApartment(), TipoScorta: row.dataset.phase || '', SKU: row.dataset.sku || '', Articolo: row.dataset.name || '', QuantitaStandard: std, QuantitaPresenteUltimoControllo: pres, QuantitaMancanteUltimoControllo: missing, Unita: row.dataset.unit || 'pz', Stato: missing > 0 ? 'Reintegro richiesto' : 'OK', Note: 'Aggiornato da mobile da ' + (state.user || '') };
+      upsertLocalStock(payload);
+      try{
+        const result = await twoEmmeApiPost(payload);
+        if(!result || result.success === false) throw new Error(result && result.error ? result.error : 'backend non confermato');
+        toast('Scorta salvata nel database');
+      } catch(err){
+        toast('Scorta salvata localmente: backend non aggiornato');
+      }
+      saveState(); renderInventory();
+    }
+
+    function upsertLocalStock(payload){
+      state.scorteAlloggi = state.scorteAlloggi || [];
+      const idx = state.scorteAlloggi.findIndex(r => normalizeKey(r.Alloggio) === normalizeKey(payload.Alloggio) && normalizeKey(r.SKU) === normalizeKey(payload.SKU));
+      const row = {...payload, UltimoAggiornamento: new Date().toISOString()};
+      delete row.action;
+      if(idx >= 0) state.scorteAlloggi[idx] = {...state.scorteAlloggi[idx], ...row}; else state.scorteAlloggi.push(row);
+    }
+
+    async function saveMobileInventory(id, index){
+      const apartment = currentInventoryApartment();
+      const rows = getInventoryRows(apartment);
+      const original = rows[index];
+      if(!original) return;
+      const std = Number(document.getElementById(id + '-std')?.value || 0);
+      const pres = Number(document.getElementById(id + '-pres')?.value || 0);
+      const missing = Math.max(std - pres, 0);
+      const payload = { action:'upsertInventoryItem', Alloggio: original.Alloggio || apartment, Categoria: original.Categoria || '', Articolo: original.Articolo || '', QuantitaStandard: std, QuantitaPresente: pres, QuantitaMancante: missing, Unita: original.Unita || 'pz', Stato: missing > 0 ? 'Da integrare' : 'Presente', Fonte: original.Fonte || 'Mobile addetta', Note: document.getElementById(id + '-note')?.value || original.Note || '', UpdatedBy: state.user || '' };
+      upsertLocalInventory(payload);
+      try{
+        const result = await twoEmmeApiPost(payload);
+        if(!result || result.success === false) throw new Error(result && result.error ? result.error : 'backend non confermato');
+        toast('Inventario salvato nel database');
+      } catch(err){
+        toast('Inventario salvato localmente: backend non aggiornato');
+      }
+      saveState(); renderInventory();
+    }
+
+    function upsertLocalInventory(payload){
+      state.inventarioCasaAlloggi = state.inventarioCasaAlloggi || [];
+      const idx = state.inventarioCasaAlloggi.findIndex(r => normalizeKey(r.Alloggio) === normalizeKey(payload.Alloggio) && normalizeKey(r.Articolo) === normalizeKey(payload.Articolo));
+      const row = {...payload, UpdatedAt: new Date().toISOString()};
+      delete row.action;
+      if(idx >= 0) state.inventarioCasaAlloggi[idx] = {...state.inventarioCasaAlloggi[idx], ...row}; else state.inventarioCasaAlloggi.push(row);
+    }
+
+    async function addMobileInventoryItem(){
+      const apartment = currentInventoryApartment();
+      const articolo = document.getElementById('new-inv-art')?.value.trim();
+      if(!articolo){ toast('Inserisci articolo'); return; }
+      const std = Number(document.getElementById('new-inv-std')?.value || 0);
+      const pres = Number(document.getElementById('new-inv-pres')?.value || 0);
+      const payload = { action:'upsertInventoryItem', Alloggio: apartment, Categoria: document.getElementById('new-inv-cat')?.value || 'Inventario casa', Articolo: articolo, QuantitaStandard: std, QuantitaPresente: pres, QuantitaMancante: Math.max(std - pres, 0), Unita: document.getElementById('new-inv-unit')?.value || 'pz', Stato: Math.max(std - pres, 0) > 0 ? 'Da integrare' : 'Presente', Fonte: 'Mobile addetta', Note: 'Inserito da mobile', UpdatedBy: state.user || '' };
+      upsertLocalInventory(payload);
+      try{
+        const result = await twoEmmeApiPost(payload);
+        if(!result || result.success === false) throw new Error(result && result.error ? result.error : 'backend non confermato');
+        toast('Nuova voce inventario salvata');
+      } catch(err){
+        toast('Nuova voce salvata localmente: backend non aggiornato');
+      }
+      saveState(); renderInventory();
+    }
+
+    async function loadInventoryFromBackend(){
+      try{
+        const mobileData = await twoEmmeApiGet('mobile', { user: state.user });
+        if(mobileData && Array.isArray(mobileData.scorteAlloggi)) state.scorteAlloggi = mobileData.scorteAlloggi;
+        if(mobileData && Array.isArray(mobileData.inventarioCasaAlloggi)) state.inventarioCasaAlloggi = mobileData.inventarioCasaAlloggi;
+        if(!state.scorteAlloggi.length){ const scorte = await twoEmmeApiGet('sheet', { sheet: 'ScorteAlloggi' }); if(scorte && Array.isArray(scorte.rows)) state.scorteAlloggi = scorte.rows; }
+        if(!state.inventarioCasaAlloggi.length){ const inv = await twoEmmeApiGet('sheet', { sheet: 'InventarioCasaAlloggi' }); if(inv && Array.isArray(inv.rows)) state.inventarioCasaAlloggi = inv.rows; }
+        saveState(); renderInventory();
+      } catch(err){
+        console.warn('Errore caricamento inventario', err);
+        renderInventory();
+      }
     }
 
     function reminderIsForCurrentUser(reminder){
