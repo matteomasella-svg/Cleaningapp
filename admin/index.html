@@ -28,7 +28,7 @@ window.TWO_EMME_CLEANING_CONFIG = {
   BACKEND_URL: "https://script.google.com/macros/s/AKfycbwnXtCVV8BD_5xiItJqZ1YjKqTZCzqvUds2r_tzNVZeWqIJBRERcZtn2mZJKkgmdMHq/exec",
   GOOGLE_SHEET_ID: "1chEViDrAke793wJZIILx_NVrnheOgRZSTAE6X0CBTFw",
   GOOGLE_SHEET_URL: "https://docs.google.com/spreadsheets/d/1chEViDrAke793wJZIILx_NVrnheOgRZSTAE6X0CBTFw/edit",
-  VERSION: "admin-v4"
+  VERSION: "admin-v4-notifications-restored"
 };
 
 async function twoEmmeApiGet(action, params = {}) {
@@ -63,6 +63,7 @@ async function twoEmmeApiPost(payload) {
         <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="legionella"><i class="fa-solid fa-bacteria"></i>Registro Legionella</button>
         <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="issues"><i class="fa-solid fa-triangle-exclamation"></i>Segnalazioni</button>
         <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="stock"><i class="fa-solid fa-boxes-stacked"></i>Scorte</button>
+        <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="notifications"><i class="fa-solid fa-bell"></i>Notifiche</button>
         <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="compliance"><i class="fa-solid fa-clipboard-check"></i>Compliance</button>
         <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="smoobu"><i class="fa-solid fa-calendar-days"></i>Smoobu</button>
         <button class="tab w-full text-slate-300 hover:bg-white/10" data-view="settings"><i class="fa-solid fa-gear"></i>Google Sheet</button>
@@ -134,6 +135,53 @@ async function twoEmmeApiPost(payload) {
 
       <section id="view-issues" class="view hidden space-y-6"><div class="card p-5"><h3 class="font-black text-lg mb-4">Segnalazioni da checklist</h3><div id="issues-list" class="space-y-3"></div></div></section>
       <section id="view-stock" class="view hidden space-y-6"><div class="card p-5"><h3 class="font-black text-lg mb-4">Verifica scorte obbligatorie</h3><div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Turno</th><th>Alloggio</th><th>Scorte staff</th><th>Scorte ospiti</th><th>Problemi</th></tr></thead><tbody id="stock-table"></tbody></table></div></div></section>
+
+      <section id="view-notifications" class="view hidden space-y-6">
+        <div class="card p-5 bg-sky-50 border-sky-100">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h3 class="font-black text-lg text-sky-950">Notifiche addette</h3>
+              <p class="text-sm text-sky-900 mt-1">Invia, modifica, archivia o cancella notifiche operative lette dalla mobile addette tramite la tabella ReminderAddetti.</p>
+            </div>
+            <button onclick="loadFromGoogleSheet()" class="rounded-2xl bg-sky-600 text-white px-4 py-3 font-black"><i class="fa-solid fa-rotate mr-2"></i>Aggiorna</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Totali</span><strong id="rem-kpi-total" class="block text-3xl mt-1">0</strong></div>
+          <div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Da leggere</span><strong id="rem-kpi-open" class="block text-3xl mt-1 text-sky-600">0</strong></div>
+          <div class="card p-5"><span class="text-xs text-slate-400 font-black uppercase">Archiviate / lette</span><strong id="rem-kpi-closed" class="block text-3xl mt-1 text-slate-500">0</strong></div>
+        </div>
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="font-black text-lg">Crea / modifica notifica</h3>
+            <button type="button" onclick="clearReminderForm()" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-black">Nuova</button>
+          </div>
+          <form onsubmit="saveReminderFromAdmin(event)" class="grid grid-cols-6 gap-3">
+            <input id="rem-id" class="input" placeholder="ID auto / modifica">
+            <select id="rem-to" class="input col-span-2">
+              <option>Tutti</option>
+              <option>Maria Guadalupe Hernández de Alfaro</option>
+              <option>Carmen Hernández</option>
+              <option>Maria Guadalupe Hernández de Alfaro; Carmen Hernández</option>
+              <option>Supervisore 2EMME</option>
+            </select>
+            <select id="rem-apartment" class="input">
+              <option>Tutti gli alloggi</option>
+              <option>The NoLo Suite</option><option>The NoLo Nest</option><option>The NoLo Heritage</option><option>The NoLo Studio</option><option>Masotto Terrace View</option>
+            </select>
+            <select id="rem-priority" class="input"><option>Normale</option><option>Importante</option><option>Alta</option><option>Urgente</option></select>
+            <select id="rem-status" class="input"><option>Da leggere</option><option>Non letto</option><option>Letto</option><option>Archiviato</option></select>
+            <input id="rem-due" type="date" class="input">
+            <input id="rem-title" class="input col-span-2" placeholder="Titolo" required>
+            <input id="rem-message" class="input col-span-3" placeholder="Messaggio" required>
+            <button class="bg-emmeBlue text-white rounded-2xl font-black">Salva notifica</button>
+          </form>
+        </div>
+        <div class="card p-5">
+          <h3 class="font-black text-lg mb-4">Notifiche presenti</h3>
+          <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Stato</th><th>Destinatario</th><th>Alloggio</th><th>Titolo</th><th>Messaggio</th><th>Priorità</th><th>Scadenza</th><th>Azioni</th></tr></thead><tbody id="reminders-table"></tbody></table></div>
+        </div>
+      </section>
 
       <section id="view-compliance" class="view hidden space-y-6">
         <div class="card p-5 bg-orange-50 border-orange-100">
@@ -231,7 +279,7 @@ POST mobile consigliato: { type:'intervento'|'segnalazione'|'legionella'|'scorte
         {id:205,type:'Controllo rilevatore CO/CO2',apartment:'Tutti gli alloggi',dueDate:'2026-07-15',frequency:'monthly',owner:'2EMME / staff',status:'Pianificato',lastOutcome:'Da verificare',documentRef:''},
         {id:206,type:'Controllo rilevatore fumo',apartment:'Tutti gli alloggi',dueDate:'2026-07-15',frequency:'monthly',owner:'2EMME / staff',status:'Pianificato',lastOutcome:'Da verificare',documentRef:''}
       ],
-      logs:[], issues:[], legionellaRegister:[]
+      logs:[], issues:[], legionellaRegister:[], reminderAddetti:[]
     };
     const $ = id => document.getElementById(id);
     let complianceFilter = 'all';
@@ -249,7 +297,7 @@ POST mobile consigliato: { type:'intervento'|'segnalazione'|'legionella'|'scorte
       $('page-title').textContent = active.textContent.trim();
       render();
     }
-    function render(){ renderKpis(); renderDashboard(); renderPlanning(); renderLegionella(); renderIssues(); renderStock(); renderCompliance(); renderSmoobu(); }
+    function render(){ db.reminderAddetti=db.reminderAddetti||[]; renderKpis(); renderDashboard(); renderPlanning(); renderLegionella(); renderIssues(); renderStock(); renderNotifications(); renderCompliance(); renderSmoobu(); }
     function renderKpis(){ $('kpi-shifts').textContent=db.shifts.length; $('kpi-completed').textContent=db.logs.length; $('kpi-issues').textContent=db.issues.length; $('kpi-legionella').textContent=db.legionellaRegister.length; const due=countComplianceDue(); if($('kpi-compliance-due')) $('kpi-compliance-due').textContent=due.overdue+due.due30; }
     function teamChecklistSummary(shift){
       const logs=db.logs.filter(l=>l.shiftId===shift.id);
@@ -273,6 +321,31 @@ POST mobile consigliato: { type:'intervento'|'segnalazione'|'legionella'|'scorte
     function renderIssues(){ $('issues-list').innerHTML = db.issues.length ? db.issues.map(i=>`<div class="rounded-2xl bg-rose-50 border border-rose-100 p-4"><b>${esc(i.apartment||'')}</b> • ${esc(i.phase||'Checklist')}<br><span class="text-sm">${esc(i.text||i.title||'Segnalazione')}</span><br><span class="text-xs text-rose-700 font-bold">${esc((i.flags||[]).join(', '))}</span></div>`).join('') : '<p class="text-slate-400 font-bold">Nessuna segnalazione registrata.</p>'; }
     function renderStock(){ $('stock-table').innerHTML=db.shifts.map(s=>`<tr><td>${fmt(s.date)} ${esc(s.time)}</td><td><b>${esc(s.apartment)}</b></td><td>${pill('Obbligatoria','bg-amber-50 text-amber-700')}</td><td>${pill('Obbligatoria','bg-amber-50 text-amber-700')}</td><td>${db.issues.filter(i=>i.apartment===s.apartment).length}</td></tr>`).join(''); }
 
+
+    function reminderStatusClass(stato){ const s=String(stato||'').toLowerCase(); if(s.includes('archiv')) return 'bg-slate-100 text-slate-600'; if(s.includes('letto')) return 'bg-emerald-50 text-emerald-700'; if(s.includes('urg')) return 'bg-rose-50 text-rose-700'; return 'bg-sky-50 text-sky-700'; }
+    function normalizeReminder(r){ return {
+      ReminderId:r.ReminderId||r.reminderId||r.id||'', DataCreazione:r.DataCreazione||r.date||'', Autore:r.Autore||r.autore||'Desktop Admin', Destinatario:r.Destinatario||r.destinatario||r.to||'Tutti', Alloggio:r.Alloggio||r.alloggio||r.apartment||'Tutti gli alloggi', Titolo:r.Titolo||r.titolo||r.title||'', Messaggio:r.Messaggio||r.messaggio||r.message||'', Priorita:r.Priorita||r.priorita||r.priority||'Normale', Scadenza:r.Scadenza||r.scadenza||r.dueDate||'', Stato:r.Stato||r.stato||'Da leggere', DataLettura:r.DataLettura||'', NoteAddetto:r.NoteAddetto||''
+    }; }
+    function renderNotifications(){
+      db.reminderAddetti=(db.reminderAddetti||[]).map(normalizeReminder);
+      if($('rem-kpi-total')) $('rem-kpi-total').textContent=db.reminderAddetti.length;
+      const open=db.reminderAddetti.filter(r=>!['letto','archiviato','eliminato'].includes(String(r.Stato||'').toLowerCase())).length;
+      if($('rem-kpi-open')) $('rem-kpi-open').textContent=open;
+      if($('rem-kpi-closed')) $('rem-kpi-closed').textContent=db.reminderAddetti.length-open;
+      if(!$('reminders-table')) return;
+      $('reminders-table').innerHTML=db.reminderAddetti.map((r,i)=>`<tr><td>${pill(r.Stato||'Da leggere', reminderStatusClass(r.Stato))}</td><td>${esc(r.Destinatario)}</td><td>${esc(r.Alloggio)}</td><td><b>${esc(r.Titolo)}</b></td><td>${esc(r.Messaggio)}</td><td>${esc(r.Priorita)}</td><td>${fmt(String(r.Scadenza||'').slice(0,10))}</td><td class="space-x-1 whitespace-nowrap"><button onclick="editReminder(${i})" class="rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs font-black">Modifica</button><button onclick="archiveReminder('${esc(r.ReminderId)}')" class="rounded-xl bg-amber-50 text-amber-700 px-3 py-2 text-xs font-black">Archivia</button><button onclick="deleteReminder('${esc(r.ReminderId)}')" class="rounded-xl bg-rose-50 text-rose-700 px-3 py-2 text-xs font-black">Cancella</button></td></tr>`).join('') || '<tr><td colspan="8" class="text-slate-400 font-bold">Nessuna notifica presente.</td></tr>';
+    }
+    function clearReminderForm(){ ['rem-id','rem-due','rem-title','rem-message'].forEach(id=>{ if($(id)) $(id).value=''; }); if($('rem-to')) $('rem-to').value='Tutti'; if($('rem-apartment')) $('rem-apartment').value='Tutti gli alloggi'; if($('rem-priority')) $('rem-priority').value='Normale'; if($('rem-status')) $('rem-status').value='Da leggere'; }
+    function editReminder(index){ const r=db.reminderAddetti[index]; if(!r) return; $('rem-id').value=r.ReminderId||''; $('rem-to').value=r.Destinatario||'Tutti'; $('rem-apartment').value=r.Alloggio||'Tutti gli alloggi'; $('rem-priority').value=r.Priorita||'Normale'; $('rem-status').value=r.Stato||'Da leggere'; $('rem-due').value=String(r.Scadenza||'').slice(0,10); $('rem-title').value=r.Titolo||''; $('rem-message').value=r.Messaggio||''; show('notifications'); }
+    async function saveReminderFromAdmin(e){
+      e.preventDefault(); const id=$('rem-id').value.trim();
+      const payload={ action:id?'updateReminder':'saveReminder', ReminderId:id||undefined, Destinatario:$('rem-to').value, Alloggio:$('rem-apartment').value, Titolo:$('rem-title').value, Messaggio:$('rem-message').value, Priorita:$('rem-priority').value, Scadenza:$('rem-due').value, Stato:$('rem-status').value, Autore:'Desktop Admin' };
+      try{ const res=await twoEmmeApiPost(payload); if(!res.success) throw new Error(res.error||'salvataggio non riuscito'); await loadFromGoogleSheet(false); clearReminderForm(); alert('Notifica salvata.'); }
+      catch(err){ db.reminderAddetti=db.reminderAddetti||[]; const row=normalizeReminder({...payload,ReminderId:id||('REM-'+Date.now()),DataCreazione:new Date().toISOString().slice(0,10)}); const idx=db.reminderAddetti.findIndex(x=>String(x.ReminderId)===String(row.ReminderId)); if(idx>=0) db.reminderAddetti[idx]=row; else db.reminderAddetti.unshift(row); save(); render(); alert('Backend non aggiornato: notifica salvata solo in locale. Errore: '+err.message); }
+    }
+    async function archiveReminder(id){ if(!id) return; try{ await twoEmmeApiPost({action:'updateReminder',ReminderId:id,Stato:'Archiviato'}); await loadFromGoogleSheet(false); }catch(err){ const r=(db.reminderAddetti||[]).find(x=>String(x.ReminderId)===String(id)); if(r) r.Stato='Archiviato'; save(); render(); } }
+    async function deleteReminder(id){ if(!id || !confirm('Cancellare questa notifica?')) return; try{ await twoEmmeApiPost({action:'deleteReminder',ReminderId:id,hardDelete:true}); await loadFromGoogleSheet(false); }catch(err){ db.reminderAddetti=(db.reminderAddetti||[]).filter(x=>String(x.ReminderId)!==String(id)); save(); render(); } }
+
     function daysUntil(dateStr){ const d=new Date(dateStr+'T00:00:00'); const today=new Date(); today.setHours(0,0,0,0); return Math.round((d-today)/86400000); }
     function complianceStatus(c){ if(c.status==='Completato') return {key:'done', label:'Completato', cls:'bg-emerald-50 text-emerald-700'}; const days=daysUntil(c.dueDate); if(days<0) return {key:'overdue', label:'Scaduto', cls:'bg-rose-50 text-rose-700'}; if(days<=30) return {key:'due', label:'In scadenza', cls:'bg-amber-50 text-amber-700'}; return {key:'planned', label:'Pianificato', cls:'bg-sky-50 text-sky-700'}; }
     function countComplianceDue(){ const rows=db.compliance||[]; return {overdue:rows.filter(c=>complianceStatus(c).key==='overdue').length, due30:rows.filter(c=>complianceStatus(c).key==='due').length}; }
@@ -295,9 +368,9 @@ POST mobile consigliato: { type:'intervento'|'segnalazione'|'legionella'|'scorte
     function renderSmoobu(){ $('calendar-map').innerHTML=SMOOBU_CALENDARS.map(c=>`<div class="rounded-2xl bg-slate-50 border border-slate-200 p-3"><b>${esc(c.apartment)}</b><br><span class="text-xs text-slate-500">${esc(c.calendarId)}</span></div>`).join(''); $('smoobu-table').innerHTML=db.reservations.map(r=>`<tr><td><b>${esc(r.apartment)}</b></td><td>${esc(r.guestName)}</td><td>${esc(r.channel)}</td><td>${fmt(r.checkIn)}</td><td>${fmt(r.checkOut)}</td><td>${esc(r.bookingCode||r.ref)}</td></tr>`).join(''); }
     function addShift(e){ e.preventDefault(); db.shifts.push({id:Date.now(),date:$('new-date').value,time:$('new-time').value,apartment:$('new-apartment').value,cleaner:$('new-cleaner').value,guestName:$('new-guest').value||'Da associare',bookingCode:$('new-booking').value||'Da associare',checkIn:$('new-checkin').value,checkOut:$('new-checkout').value,requiresLegionella:$('new-legionella').checked,status:'Pianificato'}); save(); e.target.reset(); render(); }
     function saveSheetUrl(){ localStorage.setItem('emmeCleaningSheetUrl',$('sheet-url').value); alert('URL Google Sheet salvato in locale.'); }
-    async function loadFromGoogleSheet(){ const url=localStorage.getItem('emmeCleaningSheetUrl')||$('sheet-url').value; if(!url){ alert('Inserisci prima URL Web App in Google Sheet.'); return; } try{ const res=await fetch(url); const data=await res.json(); db={...db,...data}; save(); render(); alert('Dati letti dal Google Sheet.'); }catch(err){ alert('Impossibile leggere Google Sheet: '+err.message); } }
+    async function loadFromGoogleSheet(showAlert=true){ const url=localStorage.getItem('emmeCleaningSheetUrl')||$('sheet-url').value||window.TWO_EMME_CLEANING_CONFIG.BACKEND_URL; if(!url){ alert('Inserisci prima URL Web App in Google Sheet.'); return; } try{ let data; if(url===window.TWO_EMME_CLEANING_CONFIG.BACKEND_URL){ data=await twoEmmeApiGet('adminData'); } else { const res=await fetch(url + (url.includes('?')?'&':'?') + 'action=adminData'); data=await res.json(); } db={...db,...data}; db.reminderAddetti=data.reminderAddetti||data.ReminderAddetti||db.reminderAddetti||[]; save(); render(); if(showAlert) alert('Dati letti dal Google Sheet.'); }catch(err){ if(showAlert) alert('Impossibile leggere Google Sheet: '+err.message); } }
     function exportCsv(){ const rows=[['tipo','data','alloggio','operatore','compilatore_checklist','confermato_da','ospite','prenotazione','esito'], ...db.shifts.map(s=>['turno',s.date,s.apartment,s.cleaner,'','',s.guestName,s.bookingCode,s.status]), ...db.legionellaRegister.map(r=>['legionella',r.date,r.apartment,r.operator,r.checklistCompiledBy||r.operator,'',r.guestName,r.bookingCode,r.outcome]), ...((db.compliance||[]).map(c=>['compliance',c.dueDate,c.apartment,c.owner,'','', '', c.type,c.status||'Pianificato']))]; const csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='2EMME_Cleaning_Admin_export.csv'; a.click(); }
-    $('sheet-url').value=localStorage.getItem('emmeCleaningSheetUrl')||''; render();
+    $('sheet-url').value=localStorage.getItem('emmeCleaningSheetUrl')||window.TWO_EMME_CLEANING_CONFIG.BACKEND_URL; render();
   </script>
 </body>
 </html>
